@@ -36,6 +36,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       text = await callOpenRouter(messages, 'xiaomi/mimo-v2-flash:free', temperature, systemInstruction)
     } else if (model === 'gpt-4o') {
       text = await callOpenAI(messages, temperature, systemInstruction, 'gpt-4o')
+    } else if (model === 'qwen-turbo') {
+      text = await callGroq(messages, 'qwen-turbo', temperature, systemInstruction)
+    } else if (model === 'mistral-large') {
+      text = await callGroq(messages, 'mistral-large', temperature, systemInstruction)
     } else {
       text = await callGemini(messages, 'gemini-2.0-flash', temperature, systemInstruction)
     }
@@ -85,6 +89,8 @@ async function callGroq(messages: any[], model: string, temperature: number, sys
     'llama-3.3-70b': 'llama-3.3-70b-versatile',
     'llama-3.1-8b': 'llama-3.1-8b-instant',
     'mixtral-8x7b': 'mixtral-8x7b-32768',
+    'qwen-turbo': 'qwen-turbo',
+    'mistral-large': 'mistral-large-latest',
   }
 
   const formattedMessages = []
