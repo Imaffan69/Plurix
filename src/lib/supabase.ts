@@ -1,9 +1,10 @@
 import { createClient, SupabaseClient, Session, User } from '@supabase/supabase-js'
 import { supabaseUserToAppUser } from '@/types'
 import { useStore } from '@/store'
+import { config } from '@/config'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+const supabaseUrl = config.supabaseUrl
+const supabaseAnonKey = config.supabaseAnonKey
 
 const isConfigured = Boolean(supabaseUrl && supabaseAnonKey)
 
