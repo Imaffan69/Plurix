@@ -1,20 +1,69 @@
-import { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useCallback, memo } from 'react'
 import { Link } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
-  Send, Plus, Settings, ChevronDown,
+  Send, Settings, ChevronDown,
   Copy, Globe, Paperclip, Loader2,
   PanelLeftClose, PanelLeft, Brain, Code, Image as ImageIcon, Search,
   Sparkles, Check, RotateCcw
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import toast from 'react-hot-toast'
 import { useStore } from '@/store'
 import { AI_MODELS, getModelById } from '@/lib/models'
 import { AIModel, Message } from '@/types'
 import Sidebar from '@/components/layout/Sidebar'
+
+// Lazy-load the heavy syntax highlighter only when needed
+const LazySyntaxHighlighter = React.lazy(() =>
+  import('react-syntax-highlighter').then(mod => ({ default: mod.Prism }))
+)
+
+const MessageContent = memo(function MessageContent({ content, role }: { content: string; role: string }) {
+  if (role !== 'assistant') {
+    return <p>{content}</p>
+  }
+
+  return (
+    <ReactMarkdown
+      components={{
+        code({ className, children, ...props }) {
+          const match = /language-(\w+)/.exec(className || '')
+          return match ? (
+            <div className="relative my-2.5 rounded-xl overflow-hidden border border-white/[0.04]">
+              <div className="flex items-center justify-between px-3 py-1.5 bg-white/[0.03] text-[10px] text-white/30">
+                <span>{match[1]}</span>
+                <button
+                  onClick={() => { navigator.clipboard.writeText(String(children)); toast.success('Copied!') }}
+                  className="hover:text-white/60 transition-colors"
+                >
+                  <Copy size={11} />
+                </button>
+              </div>
+              <React.Suspense fallback={
+                <pre className="p-4 bg-black/30 text-[12px] font-mono text-white/50 overflow-x-auto">{String(children).replace(/\n$/, '')}</pre>
+              }>
+                <LazySyntaxHighlighter
+                  language={match[1]}
+                  PreTag="div"
+                  customStyle={{ margin: 0, borderRadius: 0, fontSize: '12px', background: 'rgba(0,0,0,0.3)' }}
+                >
+                  {String(children).replace(/\n$/, '')}
+                </LazySyntaxHighlighter>
+              </React.Suspense>
+            </div>
+          ) : (
+            <code className="px-1 py-0.5 rounded bg-white/[0.08] text-gold-400/80 text-[12px] font-mono" {...props}>
+              {children}
+            </code>
+          )
+        },
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  )
+})
 
 export default function ChatPage() {
   const { selectedModel, setSelectedModel, sidebarOpen, toggleSidebar } = useStore()
@@ -28,11 +77,14 @@ export default function ChatPage() {
 
   const currentModel = getModelById(selectedModel)
 
+  // Use requestAnimationFrame for smooth scroll
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
   }, [messages])
 
-  const handleSend = async () => {
+  const handleSend = useCallback(async () => {
     if (!input.trim() || loading) return
 
     const userMsg: Message = {
@@ -86,7 +138,7 @@ export default function ChatPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [input, loading, messages, selectedModel, webSearch])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -117,49 +169,41 @@ export default function ChatPage() {
               <ChevronDown size={12} className={`text-white/30 transition-transform ${modelDropdown ? 'rotate-180' : ''}`} />
             </button>
 
-            <AnimatePresence>
-              {modelDropdown && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setModelDropdown(false)} />
-                  <motion.div
-                    initial={{ opacity: 0, y: -6, scale: 0.97 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -6, scale: 0.97 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute top-full left-0 mt-1.5 w-[300px] glass-elevated p-1.5 z-50 max-h-[360px] overflow-y-auto"
-                  >
-                    <div className="px-2.5 py-1.5 text-[10px] font-semibold text-white/20 uppercase tracking-wider">
-                      Select a model
-                    </div>
-                    {AI_MODELS.map(model => (
-                      <button
-                        key={model.id}
-                        onClick={() => {
-                          setSelectedModel(model.id as AIModel)
-                          setModelDropdown(false)
-                        }}
-                        className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-colors ${
-                          selectedModel === model.id
-                            ? 'bg-white/[0.06] text-white'
-                            : 'hover:bg-white/[0.04] text-white/60'
-                        }`}
-                      >
-                        <span className="text-sm shrink-0">{model.icon}</span>
-                        <div className="min-w-0 flex-1">
-                          <div className="font-medium text-[12px]">{model.name}</div>
-                          <div className="text-[11px] text-white/25">{model.provider} · {model.speed}</div>
-                        </div>
-                        {model.free && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-gold-400/10 text-gold-400 font-semibold uppercase shrink-0">
-                            Free
-                          </span>
-                        )}
-                      </button>
-                    ))}
-                  </motion.div>
-                </>
-              )}
-            </AnimatePresence>
+            {modelDropdown && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setModelDropdown(false)} />
+                <div className="absolute top-full left-0 mt-1.5 w-[300px] glass-elevated p-1.5 z-50 max-h-[360px] overflow-y-auto">
+                  <div className="px-2.5 py-1.5 text-[10px] font-semibold text-white/20 uppercase tracking-wider">
+                    Select a model
+                  </div>
+                  {AI_MODELS.map(model => (
+                    <button
+                      key={model.id}
+                      onClick={() => {
+                        setSelectedModel(model.id as AIModel)
+                        setModelDropdown(false)
+                      }}
+                      className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-colors ${
+                        selectedModel === model.id
+                          ? 'bg-white/[0.06] text-white'
+                          : 'hover:bg-white/[0.04] text-white/60'
+                      }`}
+                    >
+                      <span className="text-sm shrink-0">{model.icon}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium text-[12px]">{model.name}</div>
+                        <div className="text-[11px] text-white/25">{model.provider} · {model.speed}</div>
+                      </div>
+                      {model.free && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-gold-400/10 text-gold-400 font-semibold uppercase shrink-0">
+                          Free
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
 
           <div className="ml-auto flex items-center gap-1">
@@ -183,11 +227,7 @@ export default function ChatPage() {
         <div className="flex-1 overflow-y-auto">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full px-5 text-center">
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="max-w-md"
-              >
+              <div className="max-w-md">
                 <div className="w-16 h-16 rounded-2xl bg-gold-400/[0.06] flex items-center justify-center mx-auto mb-5">
                   <Brain size={28} className="text-gold-400/50" />
                 </div>
@@ -213,15 +253,13 @@ export default function ChatPage() {
                     </button>
                   ))}
                 </div>
-              </motion.div>
+              </div>
             </div>
           ) : (
             <div className="max-w-3xl mx-auto py-5 px-4">
               {messages.map((msg) => (
-                <motion.div
+                <div
                   key={msg.id}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
                   className={`mb-5 ${msg.role === 'user' ? 'flex justify-end' : ''}`}
                 >
                   <div className={`max-w-[85%] ${msg.role === 'user' ? 'bg-gold-400/[0.06] border border-gold-400/10 rounded-2xl rounded-br-md px-4 py-2.5' : ''}`}>
@@ -232,44 +270,7 @@ export default function ChatPage() {
                       </div>
                     )}
                     <div className={`text-[13px] leading-relaxed ${msg.role === 'user' ? 'text-white/80' : 'text-white/70'}`}>
-                      {msg.role === 'assistant' ? (
-                        <ReactMarkdown
-                          components={{
-                            code({ className, children, ...props }) {
-                              const match = /language-(\w+)/.exec(className || '')
-                              return match ? (
-                                <div className="relative my-2.5 rounded-xl overflow-hidden border border-white/[0.04]">
-                                  <div className="flex items-center justify-between px-3 py-1.5 bg-white/[0.03] text-[10px] text-white/30">
-                                    <span>{match[1]}</span>
-                                    <button
-                                      onClick={() => { navigator.clipboard.writeText(String(children)); toast.success('Copied!') }}
-                                      className="hover:text-white/60 transition-colors"
-                                    >
-                                      <Copy size={11} />
-                                    </button>
-                                  </div>
-                                  <SyntaxHighlighter
-                                    style={oneDark}
-                                    language={match[1]}
-                                    PreTag="div"
-                                    customStyle={{ margin: 0, borderRadius: 0, fontSize: '12px', background: 'rgba(0,0,0,0.3)' }}
-                                  >
-                                    {String(children).replace(/\n$/, '')}
-                                  </SyntaxHighlighter>
-                                </div>
-                              ) : (
-                                <code className="px-1 py-0.5 rounded bg-white/[0.08] text-gold-400/80 text-[12px] font-mono" {...props}>
-                                  {children}
-                                </code>
-                              )
-                            },
-                          }}
-                        >
-                          {msg.content}
-                        </ReactMarkdown>
-                      ) : (
-                        <p>{msg.content}</p>
-                      )}
+                      <MessageContent content={msg.content} role={msg.role} />
                     </div>
                     {/* Sources */}
                     {msg.sources && msg.sources.length > 0 && (
@@ -283,17 +284,13 @@ export default function ChatPage() {
                       </div>
                     )}
                   </div>
-                </motion.div>
+                </div>
               ))}
               {loading && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="flex items-center gap-1.5 text-[12px] text-white/30"
-                >
+                <div className="flex items-center gap-1.5 text-[12px] text-white/30">
                   <Loader2 size={12} className="animate-spin" />
                   <span>{currentModel?.name} is thinking...</span>
-                </motion.div>
+                </div>
               )}
               <div ref={messagesEndRef} />
             </div>

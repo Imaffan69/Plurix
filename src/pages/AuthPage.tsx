@@ -55,7 +55,8 @@ export default function AuthPage() {
       } else {
         await signIn(email, password)
         toast.success('Welcome back!')
-        // The useEffect above will handle the redirect once user state updates
+        // signIn() immediately updates the store, so navigate directly
+        navigate(returnTo, { replace: true })
       }
     } catch (err: any) {
       const msg = err?.message || 'Authentication failed'
@@ -87,14 +88,14 @@ export default function AuthPage() {
     { met: /[A-Z]/.test(password), label: 'Uppercase letter' },
     { met: /[a-z]/.test(password), label: 'Lowercase letter' },
     { met: /[0-9]/.test(password), label: 'Number' },
-    { met: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password), label: 'Special character' },
+    { met: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\\/?]/.test(password), label: 'Special character' },
   ] : []
 
   // Don't render form if already logged in
   if (authInitialized && user) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-gold-400/20 border-t-gold-400 rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-gold-400/20 border-t-gold-400 rounded-full animate-spin" />
       </div>
     )
   }
@@ -104,12 +105,11 @@ export default function AuthPage() {
       {/* Subtle background */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-gold-400/[0.03] rounded-full blur-[120px]" />
-        <div className="absolute inset-0 dot-grid opacity-30" />
       </div>
 
       <motion.div
-        initial={{ opacity: 0, y: 16, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="w-full max-w-[380px] relative z-10"
       >

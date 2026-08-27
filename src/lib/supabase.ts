@@ -1,5 +1,6 @@
 import { createClient, SupabaseClient, Session, User } from '@supabase/supabase-js'
 import { supabaseUserToAppUser } from '@/types'
+import { useStore } from '@/store'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
@@ -35,7 +36,7 @@ function createSafeClient(): SupabaseClient {
           },
         })
       }
-      if (prop === 'from') return () => ({ select: () => ({ data: [], error: null }), insert: noop, update: noop, delete: noop })
+      if (prop === 'from') return () => ({ select: () => ({ data: [], error: null }), insert: noop, update: noop, delete: noop }) 
       if (prop === 'storage') return { from: () => ({ upload: noop, getPublicUrl: () => ({ data: { publicUrl: '' } }) }) }
       return noop
     },
@@ -66,6 +67,13 @@ export async function signIn(email: string, password: string) {
     password,
   })
   if (error) throw error
+  // Immediately update the store so the caller can navigate
+  if (data.user) {
+    const s = useStore.getState()
+    s.setUser(supabaseUserToAppUser(data.user))
+    s.setAuthLoading(false)
+    s.setAuthInitialized(true)
+  }
   return data
 }
 
@@ -96,8 +104,15 @@ export async function signInWithGitHub() {
 }
 
 export async function signOut() {
-  const { error } = await supabase.auth.signOut()
-  if (error) throw error
+  try {
+    await supabase.auth.signOut()
+  } catch {
+    // Ignore signOut errors — just clear local state
+  }
+  // Always clear store state even if API call fails
+  useStore.getState().setUser(null)
+  useStore.getState().setAuthLoading(false)
+  useStore.getState().setAuthInitialized(true)
 }
 
 export async function getCurrentUser(): Promise<User | null> {
@@ -125,7 +140,7 @@ export function validatePassword(password: string): { valid: boolean; errors: st
   if (!/[A-Z]/.test(password)) errors.push('One uppercase letter')
   if (!/[a-z]/.test(password)) errors.push('One lowercase letter')
   if (!/[0-9]/.test(password)) errors.push('One number')
-  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) errors.push('One special character')
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\\/?]/.test(password)) errors.push('One special character')
   return { valid: errors.length === 0, errors }
 }
 
@@ -135,7 +150,7 @@ export function getPasswordStrength(password: string): { score: number; label: s
   if (password.length >= 12) score++
   if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score++
   if (/[0-9]/.test(password)) score++
-  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) score++
+  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\\/?]/.test(password)) score++
   if (password.length >= 16) score++
 
   if (score <= 2) return { score, label: 'Weak', color: '#ef4444' }
@@ -145,8 +160,7 @@ export function getPasswordStrength(password: string): { score: number; label: s
 }
 
 // === Centralized Auth Init ===
-// Call this once at app startup. It syncs Supabase session state into the
-// Zustand store so every component reads from the same source of truth.
+// Call this once at app startup. Syncs Supabase session into the Zustand store.
 
 let authListenerUnsub: (() => void) | null = null
 
@@ -154,43 +168,32 @@ export function initAuth() {
   // Prevent double-init
   if (authListenerUnsub) return
 
-  // Dynamically import store to avoid circular dep
-  import('@/store').then(({ useStore }) => {
-    const store = useStore.getState()
-
-    // Fetch initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      store.setUser(session?.user ? supabaseUserToAppUser(session.user) : null)
-      store.setAuthLoading(false)
-      store.setAuthInitialized(true)
-    })
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        const s = useStore.getState()
-        s.setUser(session?.user ? supabaseUserToAppUser(session.user) : null)
-        s.setAuthLoading(false)
-        s.setAuthInitialized(true)
-      }
-    )
-
-    authListenerUnsub = () => subscription.unsubscribe()
+  // Fetch initial session
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    const s = useStore.getState()
+    s.setUser(session?.user ? supabaseUserToAppUser(session.user) : null)
+    s.setAuthLoading(false)
+    s.setAuthInitialized(true)
+  }).catch(() => {
+    const s = useStore.getState()
+    s.setAuthLoading(false)
+    s.setAuthInitialized(true)
   })
+
+  // Listen for auth state changes
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    (_event, session) => {
+      const s = useStore.getState()
+      s.setUser(session?.user ? supabaseUserToAppUser(session.user) : null)
+      s.setAuthLoading(false)
+      s.setAuthInitialized(true)
+    }
+  )
+
+  authListenerUnsub = () => subscription.unsubscribe()
 }
 
 export function destroyAuth() {
   authListenerUnsub?.()
   authListenerUnsub = null
 }
-
-// Legacy hook for backward compat — reads from store
-export function useAuth() {
-  // This is now just a convenience wrapper over the store
-  // The real auth state lives in Zustand, set by initAuth()
-  const { user, authLoading, authInitialized } = useStore()
-  return { user, loading: authLoading || !authInitialized, refresh: () => {} }
-}
-
-// Need to import useStore here for useAuth
-import { useStore } from '@/store'

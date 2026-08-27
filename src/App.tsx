@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { AnimatePresence } from 'framer-motion'
 import LandingPage from '@/pages/LandingPage'
 import AuthPage from '@/pages/AuthPage'
 import ChatPage from '@/pages/ChatPage'
@@ -19,11 +18,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const authInitialized = useStore(s => s.authInitialized)
   const location = useLocation()
 
-  // Still loading auth state — show spinner, don't redirect
+  // Still loading auth state — show minimal spinner
   if (authLoading || !authInitialized) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-gold-400/20 border-t-gold-400 rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-gold-400/20 border-t-gold-400 rounded-full animate-spin" />
       </div>
     )
   }
@@ -43,21 +42,19 @@ export default function App() {
   }, [])
 
   return (
-    <AnimatePresence mode="wait">
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/auth" element={<AuthPage />} />
-        <Route path="/auth/callback" element={<AuthCallback />} />
-        <Route path="/terms" element={<TermsPage />} />
-        <Route path="/privacy" element={<PrivacyPage />} />
-        <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
-        <Route path="/chat/:id" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
-        <Route path="/tools" element={<ProtectedRoute><ToolsPage /></ProtectedRoute>} />
-        <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
-        <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-    </AnimatePresence>
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/auth" element={<AuthPage />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path="/terms" element={<TermsPage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+      <Route path="/chat/:id" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+      <Route path="/tools" element={<ProtectedRoute><ToolsPage /></ProtectedRoute>} />
+      <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
+      <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+      <Route path="*" element={<NotFoundPage />} />
+    </Routes>
   )
 }
 
@@ -67,14 +64,13 @@ function AuthCallback() {
   const authInitialized = useStore(s => s.authInitialized)
   const location = useLocation()
 
-  // Parse returnTo from the callback URL or default to /chat
   const params = new URLSearchParams(location.search)
   const returnTo = params.get('returnTo') || '/chat'
 
   if (!authInitialized) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-gold-400/20 border-t-gold-400 rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-gold-400/20 border-t-gold-400 rounded-full animate-spin" />
       </div>
     )
   }

@@ -51,22 +51,18 @@
 }
 
 @layer components {
-  /* === iOS Glass Design System === */
+  /* === iOS Glass Design System — Optimized === */
   
   .glass {
     background: rgba(255, 255, 255, 0.04);
-    backdrop-filter: blur(40px) saturate(180%);
-    -webkit-backdrop-filter: blur(40px) saturate(180%);
     border: 0.5px solid rgba(255, 255, 255, 0.06);
   }
 
   .glass-card {
     background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(40px) saturate(180%);
-    -webkit-backdrop-filter: blur(40px) saturate(180%);
     border: 0.5px solid rgba(255, 255, 255, 0.06);
     border-radius: 16px;
-    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition: border-color 0.2s ease, background 0.2s ease;
   }
 
   .glass-card:hover {
@@ -76,8 +72,6 @@
 
   .glass-elevated {
     background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(40px) saturate(200%);
-    -webkit-backdrop-filter: blur(40px) saturate(200%);
     border: 0.5px solid rgba(255, 255, 255, 0.08);
     border-radius: 16px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
@@ -85,14 +79,12 @@
 
   .glass-input {
     background: rgba(255, 255, 255, 0.04);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     border: 0.5px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
     color: #f5f5f5;
     padding: 10px 14px;
     outline: none;
-    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
     width: 100%;
     font-size: 14px;
     letter-spacing: -0.01em;
@@ -118,7 +110,7 @@
     border-radius: 12px;
     border: none;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
     font-size: 13px;
     letter-spacing: -0.01em;
     display: inline-flex;
@@ -148,14 +140,12 @@
     border-radius: 12px;
     border: 0.5px solid rgba(255, 255, 255, 0.08);
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
     font-size: 13px;
     letter-spacing: -0.01em;
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
   }
 
   .btn-secondary:hover {
@@ -176,7 +166,7 @@
     border-radius: 10px;
     border: none;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background 0.15s ease, color 0.15s ease;
     font-size: 13px;
     display: inline-flex;
     align-items: center;
@@ -195,15 +185,6 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-  }
-
-  .text-shimmer {
-    background: linear-gradient(90deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,0.6) 100%);
-    background-size: 200% 100%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: shimmer 3s linear infinite;
   }
 
   /* === Utility === */
@@ -243,19 +224,4 @@
   .text-balance {
     text-wrap: balance;
   }
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-}
-
-@keyframes pulse-glow {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 1; }
 }

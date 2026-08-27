@@ -1,10 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import {
   Shield, Users, MessageSquare, Ban, Activity, Globe,
-  Search, ChevronLeft, Eye, BarChart3,
-  UserX, CheckCircle, AlertTriangle
+  Search, ChevronLeft, BarChart3,
+  UserX, CheckCircle
 } from 'lucide-react'
 import { useStore } from '@/store'
 
@@ -94,21 +93,15 @@ export default function AdminPage() {
       <div className="max-w-6xl mx-auto p-5">
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-          {stats.map((s, i) => (
-            <motion.div
-              key={s.label}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-              className="glass-card p-4"
-            >
+          {stats.map((s) => (
+            <div key={s.label} className="glass-card p-4">
               <div className="flex items-center justify-between mb-2.5">
                 <s.icon size={16} className="text-gold-400/50" />
                 <span className="text-[10px] text-emerald-400/70 font-medium">{s.change}</span>
               </div>
               <div className="text-xl font-bold">{s.value}</div>
               <div className="text-[11px] text-white/25 mt-0.5">{s.label}</div>
-            </motion.div>
+            </div>
           ))}
         </div>
 
@@ -137,7 +130,7 @@ export default function AdminPage() {
                 {[35, 52, 45, 67, 78, 56, 89, 92, 65, 78, 85, 95].map((h, i) => (
                   <div key={i} className="flex-1 flex flex-col items-center">
                     <div
-                      className="w-full rounded-t bg-gold-400/20"
+                      className="w-full rounded-t bg-gold-400/20 transition-all duration-300"
                       style={{ height: `${h}%` }}
                     />
                   </div>
@@ -212,15 +205,13 @@ export default function AdminPage() {
                   </div>
                   <div className="flex items-center gap-0.5">
                     {user.role !== 'banned' ? (
-                      <>
-                        <button
-                          onClick={() => handleBan(user.id)}
-                          className="p-1 rounded-md hover:bg-amber-500/[0.08] text-white/20 hover:text-amber-400/70 transition-colors"
-                          title="Ban"
-                        >
-                          <Ban size={12} />
-                        </button>
-                      </>
+                      <button
+                        onClick={() => handleBan(user.id)}
+                        className="p-1 rounded-md hover:bg-amber-500/[0.08] text-white/20 hover:text-amber-400/70 transition-colors"
+                        title="Ban"
+                      >
+                        <Ban size={12} />
+                      </button>
                     ) : (
                       <button
                         onClick={() => handleUnban(user.id)}

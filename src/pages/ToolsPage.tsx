@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import {
   ChevronLeft, Code, Image, FileText, Search, Calculator,
   Globe, Brain, Music, Video, Palette, Wrench, Terminal, ArrowUpRight
@@ -94,15 +93,11 @@ export default function ToolsPage() {
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {tools.map((tool, i) => (
-              <motion.button
+            {tools.map((tool) => (
+              <button
                 key={tool.id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.03 }}
                 onClick={() => tool.available && setActiveTool(tool.id)}
                 className={`glass-card p-5 text-left group relative overflow-hidden ${!tool.available ? 'opacity-50' : 'cursor-pointer'}`}
-                whileHover={tool.available ? { y: -2 } : {}}
               >
                 <div className="w-10 h-10 rounded-xl bg-gold-400/[0.06] flex items-center justify-center mb-3 group-hover:bg-gold-400/[0.1] transition-colors">
                   <tool.icon size={18} className="text-gold-400/50" />
@@ -117,7 +112,7 @@ export default function ToolsPage() {
                 {tool.available && (
                   <ArrowUpRight size={12} className="absolute top-3 right-3 text-white/10 group-hover:text-white/30 transition-colors" />
                 )}
-              </motion.button>
+              </button>
             ))}
           </div>
         )}

@@ -2,18 +2,9 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   ArrowRight, Zap, Globe, Shield, Brain,
-  MessageSquare, Code, Image, Search, ChevronRight, Sparkles,
-  Lock, Cpu, Layers, ArrowUpRight
+  MessageSquare, Code, Image, Search, ChevronRight,
+  Lock, ArrowUpRight
 } from 'lucide-react'
-
-const fadeIn = {
-  hidden: { opacity: 0, y: 24 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
-}
-
-const stagger = {
-  visible: { transition: { staggerChildren: 0.06 } },
-}
 
 const models = [
   { name: 'Gemini 2.5 Pro', provider: 'Google' },
@@ -43,17 +34,11 @@ export default function LandingPage() {
       {/* Background */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-gold-400/[0.02] rounded-full blur-[150px]" />
-        <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-gold-400/[0.01] rounded-full blur-[120px]" />
         <div className="absolute inset-0 dot-grid opacity-40" />
       </div>
 
       {/* Nav */}
-      <motion.nav
-        initial={{ opacity: 0, y: -16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="fixed top-0 left-0 right-0 z-50 px-5 py-3"
-      >
+      <nav className="fixed top-0 left-0 right-0 z-50 px-5 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-[9px] bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center text-black font-bold text-sm">
@@ -74,97 +59,75 @@ export default function LandingPage() {
             </Link>
           </div>
         </div>
-      </motion.nav>
+      </nav>
 
       {/* Hero */}
       <section className="relative pt-28 pb-16 px-5">
         <div className="max-w-4xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.97 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass mb-7 text-[12px] text-white/50">
-              <div className="w-1.5 h-1.5 rounded-full bg-gold-400 animate-pulse" />
-              One AI. Every Model. Zero Cost.
-            </div>
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass mb-7 text-[12px] text-white/50">
+            <div className="w-1.5 h-1.5 rounded-full bg-gold-400 animate-pulse" />
+            One AI. Every Model. Zero Cost.
+          </div>
 
-            <h1 className="text-[3.2rem] sm:text-[4rem] md:text-[5rem] font-black leading-[0.92] tracking-[-0.03em] mb-5">
-              <span className="block text-white/90">The last AI</span>
-              <span className="block text-gold-gradient">assistant you need.</span>
-            </h1>
+          <h1 className="text-[3.2rem] sm:text-[4rem] md:text-[5rem] font-black leading-[0.92] tracking-[-0.03em] mb-5">
+            <span className="block text-white/90">The last AI</span>
+            <span className="block text-gold-gradient">assistant you need.</span>
+          </h1>
 
-            <p className="text-[15px] md:text-base text-white/35 max-w-lg mx-auto mb-8 leading-relaxed">
-              Chat with GPT-4o, Claude, Gemini, Llama, DeepSeek, and more —
-              all from one interface. Free. Fast. Powerful.
-            </p>
+          <p className="text-[15px] md:text-base text-white/35 max-w-lg mx-auto mb-8 leading-relaxed">
+            Chat with GPT-4o, Claude, Gemini, Llama, DeepSeek, and more —
+            all from one interface. Free. Fast. Powerful.
+          </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Link to="/auth" className="btn-primary text-[14px] px-7 py-2.5 rounded-xl">
-                Start Chatting Free <ArrowRight size={15} />
-              </Link>
-              <a href="#features" className="btn-secondary text-[14px] px-7 py-2.5 rounded-xl">
-                See What's Inside <ChevronRight size={15} />
-              </a>
-            </div>
-          </motion.div>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link to="/auth" className="btn-primary text-[14px] px-7 py-2.5 rounded-xl">
+              Start Chatting Free <ArrowRight size={15} />
+            </Link>
+            <a href="#features" className="btn-secondary text-[14px] px-7 py-2.5 rounded-xl">
+              See What's Inside <ChevronRight size={15} />
+            </a>
+          </div>
 
           {/* Model tags */}
-          <motion.div
-            variants={stagger}
-            initial="hidden"
-            animate="visible"
-            className="mt-14 flex flex-wrap justify-center gap-2"
-          >
+          <div className="mt-14 flex flex-wrap justify-center gap-2">
             {models.map((m) => (
-              <motion.div
+              <div
                 key={m.name}
-                variants={fadeIn}
                 className="glass px-3.5 py-2 flex items-center gap-2 text-[12px] rounded-full"
               >
                 <span className="text-white/50">{m.name}</span>
                 <span className="text-white/20">·</span>
                 <span className="text-white/25">{m.provider}</span>
-              </motion.div>
+              </div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* Features */}
       <section id="features" className="py-20 px-5">
         <div className="max-w-5xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-14"
-          >
+          <div className="text-center mb-14">
             <h2 className="text-3xl md:text-4xl font-bold mb-3 tracking-tight">
               Everything you need. <span className="text-gold-gradient">Nothing you don't.</span>
             </h2>
             <p className="text-white/35 text-[15px] max-w-md mx-auto">
               Built for power users who want the best AI tools without the bloat.
             </p>
-          </motion.div>
+          </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
-            {features.map((f, i) => (
-              <motion.div
+            {features.map((f) => (
+              <div
                 key={f.title}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.05 }}
                 className="glass-card p-5 group"
-                whileHover={{ y: -2 }}
               >
                 <div className="w-10 h-10 rounded-xl bg-gold-400/[0.06] flex items-center justify-center mb-3 group-hover:bg-gold-400/[0.1] transition-colors">
                   <f.icon size={18} className="text-gold-400/70" />
                 </div>
                 <h3 className="font-semibold text-[14px] mb-1">{f.title}</h3>
                 <p className="text-white/30 text-[13px] leading-relaxed">{f.desc}</p>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -173,28 +136,19 @@ export default function LandingPage() {
       {/* Models */}
       <section id="models" className="py-20 px-5">
         <div className="max-w-5xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-14"
-          >
+          <div className="text-center mb-14">
             <h2 className="text-3xl md:text-4xl font-bold mb-3 tracking-tight">
               Pick any model. <span className="text-gold-gradient">They're all free.</span>
             </h2>
             <p className="text-white/35 text-[15px] max-w-md mx-auto">
               No credits. No limits. Just pick a model and start talking.
             </p>
-          </motion.div>
+          </div>
 
           <div className="grid sm:grid-cols-2 gap-3">
-            {models.map((m, i) => (
-              <motion.div
+            {models.map((m) => (
+              <div
                 key={m.name}
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.04 }}
                 className="glass-card p-4 flex items-center gap-3.5 group"
               >
                 <div className="w-10 h-10 rounded-xl bg-white/[0.04] flex items-center justify-center shrink-0 group-hover:bg-white/[0.07] transition-colors">
@@ -210,7 +164,7 @@ export default function LandingPage() {
                   <p className="text-white/25 text-[12px] mt-0.5">{m.provider}</p>
                 </div>
                 <ArrowUpRight size={14} className="text-white/10 group-hover:text-white/30 transition-colors shrink-0" />
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -219,12 +173,7 @@ export default function LandingPage() {
       {/* Security */}
       <section id="security" className="py-20 px-5">
         <div className="max-w-5xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="glass-card p-10 text-center border-glow"
-          >
+          <div className="glass-card p-10 text-center border-glow">
             <div className="w-14 h-14 rounded-2xl bg-gold-400/[0.06] flex items-center justify-center mx-auto mb-5">
               <Lock size={24} className="text-gold-400/70" />
             </div>
@@ -243,7 +192,7 @@ export default function LandingPage() {
                 Read Our Privacy Policy
               </Link>
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
