@@ -36,18 +36,24 @@ export interface Conversation {
 }
 
 export type AIModel = 
-  | 'gemini-2.0-flash'
-  | 'gemini-2.5-pro'
-  | 'llama-3.3-70b'
-  | 'llama-3.1-8b'
-  | 'mixtral-8x7b'
-  | 'gpt-4o-mini'
-  | 'gpt-4o'
-  | 'claude-3.5-sonnet'
-  | 'deepseek-chat'
-  | 'qwen-turbo'
-  | 'mistral-large'
-  | 'mimo-v2-flash'
+  | 'gemini-3.7-flash'
+  | 'gemini-3.6-flash'
+  | 'gemini-3.5-flash'
+  | 'qwen-3.8-27b'
+  | 'qwen-3.6-27b'
+  | 'gpt-oss-120b'
+  | 'gpt-oss-20b'
+  | 'allam-2-7b'
+  | 'nemotron-ultra-550b'
+  | 'nemotron-3.5-lightning'
+  | 'nemotron-super-120b'
+  | 'gemma-4-31b'
+  | 'gemma-4-26b'
+  | 'minimax-m3'
+  | 'glm-5.2'
+  | 'cohere-north-mini'
+  | 'inkling'
+  | 'openrouter-free'
 
 export interface AIModelInfo {
   id: AIModel

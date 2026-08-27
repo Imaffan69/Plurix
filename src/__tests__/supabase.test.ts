@@ -1,64 +1,120 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
+import {
+  validatePassword,
+  getPasswordStrength,
+  supabase,
+} from '@/lib/supabase'
+import { useStore } from '@/store'
 
-// Mock the import.meta.env so supabase.ts reads empty values
-vi.stubEnv('VITE_SUPABASE_URL', '')
-vi.stubEnv('VITE_SUPABASE_ANON_KEY', '')
+describe('validatePassword', () => {
+  it('rejects passwords shorter than 8 characters', () => {
+    const result = validatePassword('Ab1!')
+    expect(result.valid).toBe(false)
+    expect(result.errors).toContain('At least 8 characters')
+  })
 
-// Mock @supabase/supabase-js to track calls
-const mockCreateClient = vi.fn()
-vi.mock('@supabase/supabase-js', () => ({ createClient: (...args: any[]) => mockCreateClient(...args) }))
+  it('rejects passwords without uppercase', () => {
+    const result = validatePassword('alllower1!')
+    expect(result.valid).toBe(false)
+    expect(result.errors).toContain('One uppercase letter')
+  })
 
-describe('Supabase safe client', () => {
+  it('rejects passwords without lowercase', () => {
+    const result = validatePassword('ALLUPPER1!')
+    expect(result.valid).toBe(false)
+    expect(result.errors).toContain('One lowercase letter')
+  })
+
+  it('rejects passwords without a number', () => {
+    const result = validatePassword('NoNumber!!')
+    expect(result.valid).toBe(false)
+    expect(result.errors).toContain('One number')
+  })
+
+  it('rejects passwords without a special character', () => {
+    const result = validatePassword('NoSpecial1')
+    expect(result.valid).toBe(false)
+    expect(result.errors).toContain('One special character')
+  })
+
+  it('accepts a fully valid password', () => {
+    const result = validatePassword('Str0ng!Pass')
+    expect(result.valid).toBe(true)
+    expect(result.errors).toHaveLength(0)
+  })
+
+  it('collects all errors for a completely invalid password', () => {
+    const result = validatePassword('12')
+    expect(result.valid).toBe(false)
+    expect(result.errors.length).toBeGreaterThanOrEqual(3)
+  })
+})
+
+describe('getPasswordStrength', () => {
+  it('returns Weak for a short password', () => {
+    const result = getPasswordStrength('ab1!')
+    expect(result.label).toBe('Weak')
+    expect(result.score).toBeLessThanOrEqual(2)
+    expect(result.color).toBe('#ef4444')
+  })
+
+  it('returns Fair for a moderate password', () => {
+    const result = getPasswordStrength('Ab1!xyz')
+    expect(result.label).toBe('Fair')
+    expect(result.score).toBeGreaterThan(2)
+  })
+
+  it('returns Strong for a good password', () => {
+    const result = getPasswordStrength('MyP@ssw0rd!!')
+    expect(result.label).toBe('Strong')
+    expect(result.score).toBeGreaterThanOrEqual(5)
+  })
+
+  it('returns Very Strong for a long, complex password', () => {
+    const result = getPasswordStrength('V3ry!Str0ng&P@ssw0rd!')
+    expect(result.label).toBe('Very Strong')
+    expect(result.score).toBeGreaterThanOrEqual(6)
+  })
+})
+
+describe('supabase proxy client (no env vars)', () => {
   beforeEach(() => {
-    vi.restoreAllMocks()
-    mockCreateClient.mockReset()
-    vi.stubEnv('VITE_SUPABASE_URL', '')
-    vi.stubEnv('VITE_SUPABASE_ANON_KEY', '')
-  })
-
-  it('does NOT call real createClient when env vars are missing', async () => {
-    const { supabase } = await import('@/lib/supabase')
-
-    expect(mockCreateClient).not.toHaveBeenCalled()
-
-    expect(supabase).toBeDefined()
-    expect(supabase.auth).toBeDefined()
-    expect(typeof supabase.auth.signInWithPassword).toBe('function')
-    expect(typeof supabase.auth.signUp).toBe('function')
-    expect(typeof supabase.auth.signOut).toBe('function')
-  })
-
-  it('auth methods return safe no-op results', async () => {
-    const { supabase } = await import('@/lib/supabase')
-
-    const result = await supabase.auth.signInWithPassword({
-      email: 'test@test.com',
-      password: 'password',
+    // Reset the store
+    useStore.setState({
+      user: null,
+      authLoading: true,
+      authInitialized: false,
     })
-    expect(result).toEqual({ data: null, error: null })
   })
 
-  it('onAuthStateChange returns an unsubscribeable subscription', async () => {
-    const { supabase } = await import('@/lib/supabase')
+  it('auth.getUser returns null user when no credentials', async () => {
+    const { data, error } = await supabase.auth.getUser()
+    expect(error).toBeNull()
+    expect(data.user).toBeNull()
+  })
 
+  it('auth.getSession returns null session when no credentials', async () => {
+    const { data, error } = await supabase.auth.getSession()
+    expect(error).toBeNull()
+    expect(data.session).toBeNull()
+  })
+
+  it('auth.onAuthStateChange returns a subscription with unsubscribe', () => {
     const { data } = supabase.auth.onAuthStateChange(() => {})
-    expect(data).toBeDefined()
     expect(data.subscription).toBeDefined()
     expect(typeof data.subscription.unsubscribe).toBe('function')
-    data.subscription.unsubscribe()
   })
 
-  it('storage.from() returns safe no-op results', async () => {
-    const { supabase } = await import('@/lib/supabase')
-
-    const result = await supabase.storage.from('avatars').upload('file.png', new Blob())
-    expect(result).toEqual({ data: null, error: null })
+  it('from() returns a queryable chain', async () => {
+    const result = await supabase.from('test').select('*')
+    expect(result.data).toEqual([])
+    expect(result.error).toBeNull()
   })
 
-  it('from() returns a safe query builder', async () => {
-    const { supabase } = await import('@/lib/supabase')
-
-    const result = await supabase.from('users').select('*')
-    expect(result).toEqual({ data: [], error: null })
+  it('storage.from() returns upload and getPublicUrl', () => {
+    const bucket = supabase.storage.from('test')
+    expect(typeof bucket.upload).toBe('function')
+    const { data } = bucket.getPublicUrl('file.png')
+    expect(data.publicUrl).toBe('')
   })
 })

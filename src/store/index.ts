@@ -54,7 +54,7 @@ export const useStore = create<AppState>((set) => ({
     ),
   })),
 
-  selectedModel: 'gemini-2.0-flash',
+  selectedModel: 'gemini-3.7-flash',
   setSelectedModel: (model) => set({ selectedModel: model }),
 
   sidebarOpen: true,

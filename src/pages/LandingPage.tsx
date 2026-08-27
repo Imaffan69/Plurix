@@ -7,14 +7,14 @@ import {
 } from 'lucide-react'
 
 const models = [
-  { name: 'Gemini 2.5 Pro', provider: 'Google' },
-  { name: 'GPT-4o Mini', provider: 'OpenAI' },
-  { name: 'Claude 3.5', provider: 'Anthropic' },
-  { name: 'Llama 3.3', provider: 'Meta' },
-  { name: 'DeepSeek V3', provider: 'DeepSeek' },
-  { name: 'Mistral Large', provider: 'Mistral' },
-  { name: 'Qwen Turbo', provider: 'Alibaba' },
-  { name: 'Mixtral 8x7B', provider: 'Mistral' },
+  { name: 'Gemini 3.7 Flash', provider: 'Google' },
+  { name: 'Gemini 3.6 Flash', provider: 'Google' },
+  { name: 'Nemotron Ultra 550B', provider: 'NVIDIA' },
+  { name: 'Qwen 3.8 27B', provider: 'Alibaba' },
+  { name: 'GPT-OSS 120B', provider: 'OpenAI' },
+  { name: 'Gemma 4 31B', provider: 'Google' },
+  { name: 'MiniMax M3', provider: 'MiniMax' },
+  { name: 'GLM 5.2', provider: 'Z.ai' },
 ]
 
 const features = [
@@ -75,8 +75,8 @@ export default function LandingPage() {
           </h1>
 
           <p className="text-[15px] md:text-base text-white/35 max-w-lg mx-auto mb-8 leading-relaxed">
-            Chat with GPT-4o, Claude, Gemini, Llama, DeepSeek, and more —
-            all from one interface. Free. Fast. Powerful.
+            Chat with Gemini, Nemotron 550B, Qwen 3.8, GPT-OSS 120B, Gemma 4, and more —
+            all free, all fast, all from one interface.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">

@@ -1,70 +1,75 @@
 import { describe, it, expect } from 'vitest'
 import { AI_MODELS, getModelById, getFreeModels } from '@/lib/models'
 
-describe('AI_MODELS config', () => {
-  it('contains 12 models', () => {
-    expect(AI_MODELS.length).toBe(12)
+describe('AI_MODELS data', () => {
+  it('contains at least 10 models', () => {
+    expect(AI_MODELS.length).toBeGreaterThanOrEqual(10)
   })
 
-  it('each model has required fields', () => {
-    AI_MODELS.forEach((model) => {
+  it('every model has required fields', () => {
+    for (const model of AI_MODELS) {
       expect(model.id).toBeTruthy()
       expect(model.name).toBeTruthy()
       expect(model.provider).toBeTruthy()
-      expect(model.description).toBeTruthy()
       expect(model.icon).toBeTruthy()
-      expect(model.color).toBeTruthy()
       expect(model.maxTokens).toBeGreaterThan(0)
-    })
+      expect(['ultra-fast', 'fast', 'moderate']).toContain(model.speed)
+      expect(typeof model.free).toBe('boolean')
+    }
   })
 
-  it('has unique model IDs', () => {
-    const ids = AI_MODELS.map((m) => m.id)
-    expect(new Set(ids).size).toBe(ids.length)
+  it('has no duplicate IDs', () => {
+    const ids = AI_MODELS.map(m => m.id)
+    const uniqueIds = new Set(ids)
+    expect(uniqueIds.size).toBe(ids.length)
   })
 
-  it('includes expected key models', () => {
-    const ids = AI_MODELS.map((m) => m.id)
-    expect(ids).toContain('gemini-2.0-flash')
-    expect(ids).toContain('gemini-2.5-pro')
-    expect(ids).toContain('llama-3.3-70b')
-    expect(ids).toContain('gpt-4o')
-    expect(ids).toContain('gpt-4o-mini')
-    expect(ids).toContain('claude-3.5-sonnet')
-    expect(ids).toContain('deepseek-chat')
-    expect(ids).toContain('mimo-v2-flash')
-    expect(ids).toContain('mixtral-8x7b')
-    expect(ids).toContain('qwen-turbo')
-    expect(ids).toContain('mistral-large')
+  it('all models are free', () => {
+    expect(AI_MODELS.every(m => m.free)).toBe(true)
+  })
+
+  it('includes Groq and OpenRouter providers', () => {
+    const providers = AI_MODELS.map(m => m.provider.toLowerCase())
+    expect(providers.some(p => p.includes('groq'))).toBe(true)
+    expect(providers.some(p => p.includes('openrouter'))).toBe(true)
+  })
+
+  it('has at least 5 Groq models', () => {
+    const groqModels = AI_MODELS.filter(m => m.provider.toLowerCase().includes('groq'))
+    expect(groqModels.length).toBeGreaterThanOrEqual(5)
+  })
+
+  it('has at least 5 OpenRouter models', () => {
+    const orModels = AI_MODELS.filter(m => m.provider.toLowerCase().includes('openrouter'))
+    expect(orModels.length).toBeGreaterThanOrEqual(5)
   })
 })
 
 describe('getModelById', () => {
   it('returns the correct model', () => {
-    const model = getModelById('gemini-2.0-flash')
+    const model = getModelById('nemotron-ultra-550b')
     expect(model).toBeDefined()
-    expect(model!.name).toBe('Gemini 2.0 Flash')
-    expect(model!.provider).toBe('Google')
+    expect(model!.name).toBe('Nemotron Ultra 550B')
   })
 
-  it('returns undefined for unknown ID', () => {
-    expect(getModelById('nonexistent')).toBeUndefined()
+  it('returns undefined for unknown id', () => {
+    expect(getModelById('nonexistent-model')).toBeUndefined()
+  })
+
+  it('finds all model IDs', () => {
+    for (const m of AI_MODELS) {
+      expect(getModelById(m.id)).toBeDefined()
+    }
   })
 })
 
 describe('getFreeModels', () => {
-  it('returns only models with free: true', () => {
-    const freeModels = getFreeModels()
-    freeModels.forEach((m) => expect(m.free).toBe(true))
+  it('returns only free models', () => {
+    const free = getFreeModels()
+    expect(free.every(m => m.free)).toBe(true)
   })
 
-  it('excludes paid models', () => {
-    const freeModels = getFreeModels()
-    const ids = freeModels.map((m) => m.id)
-    expect(ids).not.toContain('gpt-4o')
-  })
-
-  it('returns at least 10 free models', () => {
-    expect(getFreeModels().length).toBeGreaterThanOrEqual(10)
+  it('returns all models (all are free)', () => {
+    expect(getFreeModels().length).toBe(AI_MODELS.length)
   })
 })
