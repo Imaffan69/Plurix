@@ -5,8 +5,10 @@ import { useStore } from '@/store'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
 
+const isConfigured = Boolean(supabaseUrl && supabaseAnonKey)
+
 function createSafeClient(): SupabaseClient {
-  if (supabaseUrl && supabaseAnonKey) {
+  if (isConfigured) {
     return createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: true,
@@ -46,9 +48,18 @@ function createSafeClient(): SupabaseClient {
 
 export const supabase = createSafeClient()
 
+function assertConfigured(feature: string) {
+  if (!isConfigured) {
+    throw new Error(
+      `${feature} requires Supabase. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Settings → Environment.`
+    )
+  }
+}
+
 // === Auth Functions ===
 
 export async function signUp(email: string, password: string, name: string) {
+  assertConfigured('Sign up')
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -62,13 +73,14 @@ export async function signUp(email: string, password: string, name: string) {
 }
 
 export async function signIn(email: string, password: string) {
+  assertConfigured('Sign in')
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   })
   if (error) throw error
   // Immediately update the store so the caller can navigate
-  if (data.user) {
+  if (data?.user) {
     const s = useStore.getState()
     s.setUser(supabaseUserToAppUser(data.user))
     s.setAuthLoading(false)
@@ -78,6 +90,7 @@ export async function signIn(email: string, password: string) {
 }
 
 export async function signInWithGoogle() {
+  assertConfigured('Google sign-in')
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
@@ -89,6 +102,7 @@ export async function signInWithGoogle() {
 }
 
 export async function signInWithGitHub() {
+  assertConfigured('GitHub sign-in')
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'github',
     options: {
@@ -101,7 +115,7 @@ export async function signInWithGitHub() {
 
 export async function signOut() {
   try {
-    await supabase.auth.signOut()
+    if (isConfigured) await supabase.auth.signOut()
   } catch {
     // Ignore signOut errors — just clear local state
   }
@@ -112,16 +126,19 @@ export async function signOut() {
 }
 
 export async function getCurrentUser(): Promise<User | null> {
+  if (!isConfigured) return null
   const { data: { user } } = await supabase.auth.getUser()
   return user
 }
 
 export async function getSession(): Promise<Session | null> {
+  if (!isConfigured) return null
   const { data: { session } } = await supabase.auth.getSession()
   return session
 }
 
 export async function resetPassword(email: string) {
+  assertConfigured('Password reset')
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${window.location.origin}/settings`,
   })
@@ -163,6 +180,16 @@ let authListenerUnsub: (() => void) | null = null
 export function initAuth() {
   // Prevent double-init
   if (authListenerUnsub) return
+
+  if (!isConfigured) {
+    // No Supabase — mark auth as initialized with no user
+    const s = useStore.getState()
+    s.setUser(null)
+    s.setAuthLoading(false)
+    s.setAuthInitialized(true)
+    console.warn('Supabase not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.')
+    return
+  }
 
   // Fetch initial session
   supabase.auth.getSession().then(({ data: { session } }) => {

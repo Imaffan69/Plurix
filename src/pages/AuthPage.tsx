@@ -7,7 +7,7 @@ import {
   Check, X, Shield
 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { signUp, signIn, signInWithGoogle, signInWithGitHub, validatePassword, getPasswordStrength } from '@/lib/supabase'
+import { signUp, signIn, signInWithGoogle, signInWithGitHub, validatePassword, getPasswordStrength, supabase } from '@/lib/supabase'
 import { useStore } from '@/store'
 
 type AuthMode = 'signin' | 'signup' | 'otp'
@@ -40,6 +40,11 @@ export default function AuthPage() {
     e.preventDefault()
     if (loading) return
 
+    if (!isConfigured) {
+      toast.error('Authentication not configured. Add Supabase keys in Settings → Environment.', { duration: 6000 })
+      return
+    }
+
     setLoading(true)
     try {
       if (mode === 'signup') {
@@ -60,7 +65,9 @@ export default function AuthPage() {
       }
     } catch (err: any) {
       const msg = err?.message || 'Authentication failed'
-      if (msg.includes('Invalid login credentials')) {
+      if (msg.includes('not configured')) {
+        toast.error(msg, { duration: 6000 })
+      } else if (msg.includes('Invalid login credentials')) {
         toast.error('Invalid email or password')
       } else if (msg.includes('already registered')) {
         toast.error('An account with this email already exists')
@@ -74,15 +81,26 @@ export default function AuthPage() {
     }
   }
 
+  // Check if Supabase is configured
+  const isConfigured = Boolean(
+    import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY
+  )
+
   const handleOAuth = async (provider: 'google' | 'github') => {
+    if (!isConfigured) {
+      toast.error('Authentication not configured. Add Supabase keys in Settings → Environment.', { duration: 6000 })
+      return
+    }
     try {
-      console.log(`Starting ${provider} OAuth...`)
       if (provider === 'google') await signInWithGoogle()
       else await signInWithGitHub()
-      console.log(`${provider} OAuth redirect initiated`)
     } catch (err: any) {
-      console.error(`${provider} OAuth error:`, err)
-      toast.error(err.message || 'OAuth sign-in failed')
+      const msg = err?.message || ''
+      if (msg.includes('not configured')) {
+        toast.error(msg, { duration: 6000 })
+      } else {
+        toast.error(`${provider} sign-in failed. Make sure ${provider} is enabled in your Supabase dashboard.`, { duration: 6000 })
+      }
     }
   }
 
@@ -168,13 +186,21 @@ export default function AuthPage() {
 
                 {/* OAuth */}
                 <div className="grid grid-cols-2 gap-2.5 mb-5">
-                  <button onClick={() => handleOAuth('google')} className="btn-secondary justify-center text-[13px]">
+                  <button onClick={() => handleOAuth('google')} className="btn-secondary justify-center text-[13px]" disabled={!isConfigured}>
                     <Chrome size={15} /> Google
                   </button>
-                  <button onClick={() => handleOAuth('github')} className="btn-secondary justify-center text-[13px]">
+                  <button onClick={() => handleOAuth('github')} className="btn-secondary justify-center text-[13px]" disabled={!isConfigured}>
                     <Github size={15} /> GitHub
                   </button>
                 </div>
+
+                {!isConfigured && (
+                  <div className="mb-4 px-3 py-2 rounded-lg bg-gold-400/[0.06] border border-gold-400/10">
+                    <p className="text-[11px] text-gold-400/80 leading-relaxed">
+                      Google sign-in requires Supabase. Add your VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Settings → Environment to enable it.
+                    </p>
+                  </div>
+                )}
 
                 <div className="flex items-center gap-3 mb-5">
                   <div className="flex-1 h-px bg-white/[0.06]" />
