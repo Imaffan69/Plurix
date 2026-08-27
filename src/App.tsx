@@ -58,14 +58,12 @@ export default function App() {
   )
 }
 
-// OAuth callback handler — waits for Supabase to process the token, then redirects
+// OAuth callback handler — Supabase returns tokens in the URL hash fragment (#access_token=...)
+// The Supabase client with detectSessionInUrl:true auto-exchanges the code on page load.
+// This component just waits for the auth state to resolve and redirects.
 function AuthCallback() {
   const user = useStore(s => s.user)
   const authInitialized = useStore(s => s.authInitialized)
-  const location = useLocation()
-
-  const params = new URLSearchParams(location.search)
-  const returnTo = params.get('returnTo') || '/chat'
 
   if (!authInitialized) {
     return (
@@ -76,7 +74,7 @@ function AuthCallback() {
   }
 
   if (user) {
-    return <Navigate to={returnTo} replace />
+    return <Navigate to="/chat" replace />
   }
 
   return <Navigate to="/auth" replace />

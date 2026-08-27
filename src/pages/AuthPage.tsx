@@ -76,9 +76,12 @@ export default function AuthPage() {
 
   const handleOAuth = async (provider: 'google' | 'github') => {
     try {
+      console.log(`Starting ${provider} OAuth...`)
       if (provider === 'google') await signInWithGoogle()
       else await signInWithGitHub()
+      console.log(`${provider} OAuth redirect initiated`)
     } catch (err: any) {
+      console.error(`${provider} OAuth error:`, err)
       toast.error(err.message || 'OAuth sign-in failed')
     }
   }
