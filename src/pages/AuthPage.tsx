@@ -3,11 +3,12 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Mail, Lock, User, Eye, EyeOff, ArrowRight,
-  Github, Chrome, Loader2, CheckCircle2, AlertCircle,
+  Github, Chrome, Loader2, CheckCircle2,
   Check, X, Shield
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { signUp, signIn, signInWithGoogle, signInWithGitHub, validatePassword, getPasswordStrength } from '@/lib/supabase'
+import { useStore } from '@/store'
 
 type AuthMode = 'signin' | 'signup' | 'otp'
 
@@ -15,6 +16,8 @@ export default function AuthPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const returnTo = searchParams.get('returnTo') || '/chat'
+  const user = useStore(s => s.user)
+  const authInitialized = useStore(s => s.authInitialized)
   const [mode, setMode] = useState<AuthMode>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -22,6 +25,13 @@ export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [otpSent, setOtpSent] = useState(false)
+
+  // If already logged in, redirect immediately
+  useEffect(() => {
+    if (authInitialized && user) {
+      navigate(returnTo, { replace: true })
+    }
+  }, [user, authInitialized, navigate, returnTo])
 
   const passwordCheck = mode === 'signup' ? validatePassword(password) : { valid: true, errors: [] }
   const passwordStrength = mode === 'signup' ? getPasswordStrength(password) : null
@@ -45,7 +55,7 @@ export default function AuthPage() {
       } else {
         await signIn(email, password)
         toast.success('Welcome back!')
-        navigate(returnTo, { replace: true })
+        // The useEffect above will handle the redirect once user state updates
       }
     } catch (err: any) {
       const msg = err?.message || 'Authentication failed'
@@ -79,6 +89,15 @@ export default function AuthPage() {
     { met: /[0-9]/.test(password), label: 'Number' },
     { met: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password), label: 'Special character' },
   ] : []
+
+  // Don't render form if already logged in
+  if (authInitialized && user) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-gold-400/20 border-t-gold-400 rounded-full animate-spin" />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center px-4 relative overflow-hidden">

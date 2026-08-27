@@ -77,3 +77,16 @@ export interface BannedUser {
   expires_at?: string
   type: 'temporary' | 'permanent'
 }
+
+// Convert Supabase User to our app User type
+export function supabaseUserToAppUser(supabaseUser: any): User {
+  return {
+    id: supabaseUser.id,
+    email: supabaseUser.email || '',
+    name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || '',
+    avatar_url: supabaseUser.user_metadata?.avatar_url,
+    role: 'user',
+    created_at: supabaseUser.created_at || new Date().toISOString(),
+    last_sign_in: supabaseUser.last_sign_in_at,
+  }
+}

@@ -4,22 +4,28 @@ import { AIModel, Conversation, Message, User } from '@/types'
 interface AppState {
   user: User | null
   setUser: (user: User | null) => void
-  
+
+  authLoading: boolean
+  setAuthLoading: (loading: boolean) => void
+
+  authInitialized: boolean
+  setAuthInitialized: (initialized: boolean) => void
+
   conversations: Conversation[]
   activeConversation: string | null
   setActiveConversation: (id: string | null) => void
   addConversation: (conv: Conversation) => void
   addMessage: (conversationId: string, message: Message) => void
-  
+
   selectedModel: AIModel
   setSelectedModel: (model: AIModel) => void
-  
+
   sidebarOpen: boolean
   toggleSidebar: () => void
-  
+
   theme: 'dark' | 'light'
   toggleTheme: () => void
-  
+
   commandPaletteOpen: boolean
   setCommandPaletteOpen: (open: boolean) => void
 }
@@ -27,7 +33,13 @@ interface AppState {
 export const useStore = create<AppState>((set) => ({
   user: null,
   setUser: (user) => set({ user }),
-  
+
+  authLoading: true,
+  setAuthLoading: (authLoading) => set({ authLoading }),
+
+  authInitialized: false,
+  setAuthInitialized: (authInitialized) => set({ authInitialized }),
+
   conversations: [],
   activeConversation: null,
   setActiveConversation: (id) => set({ activeConversation: id }),
@@ -41,18 +53,18 @@ export const useStore = create<AppState>((set) => ({
         : c
     ),
   })),
-  
+
   selectedModel: 'gemini-2.0-flash',
   setSelectedModel: (model) => set({ selectedModel: model }),
-  
+
   sidebarOpen: true,
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
-  
+
   theme: 'dark',
   toggleTheme: () => set((state) => ({
     theme: state.theme === 'dark' ? 'light' : 'dark',
   })),
-  
+
   commandPaletteOpen: false,
   setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
 }))

@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import LandingPage from '@/pages/LandingPage'
@@ -9,13 +10,17 @@ import SettingsPage from '@/pages/SettingsPage'
 import TermsPage from '@/pages/TermsPage'
 import PrivacyPage from '@/pages/PrivacyPage'
 import NotFoundPage from '@/pages/NotFoundPage'
-import { useAuth } from '@/lib/supabase'
+import { initAuth } from '@/lib/supabase'
+import { useStore } from '@/store'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth()
+  const user = useStore(s => s.user)
+  const authLoading = useStore(s => s.authLoading)
+  const authInitialized = useStore(s => s.authInitialized)
   const location = useLocation()
 
-  if (loading) {
+  // Still loading auth state — show spinner, don't redirect
+  if (authLoading || !authInitialized) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-gold-400/20 border-t-gold-400 rounded-full animate-spin" />
@@ -23,6 +28,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     )
   }
 
+  // Auth checked, no user — redirect to login
   if (!user) {
     return <Navigate to={`/auth?returnTo=${encodeURIComponent(location.pathname)}`} replace />
   }
@@ -31,11 +37,17 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  // Initialize Supabase auth listener once on app mount
+  useEffect(() => {
+    initAuth()
+  }, [])
+
   return (
     <AnimatePresence mode="wait">
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/auth" element={<AuthPage />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
@@ -47,4 +59,29 @@ export default function App() {
       </Routes>
     </AnimatePresence>
   )
+}
+
+// OAuth callback handler — waits for Supabase to process the token, then redirects
+function AuthCallback() {
+  const user = useStore(s => s.user)
+  const authInitialized = useStore(s => s.authInitialized)
+  const location = useLocation()
+
+  // Parse returnTo from the callback URL or default to /chat
+  const params = new URLSearchParams(location.search)
+  const returnTo = params.get('returnTo') || '/chat'
+
+  if (!authInitialized) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-gold-400/20 border-t-gold-400 rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  if (user) {
+    return <Navigate to={returnTo} replace />
+  }
+
+  return <Navigate to="/auth" replace />
 }

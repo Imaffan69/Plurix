@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient, Session, User } from '@supabase/supabase-js'
-import { useEffect, useState, useCallback } from 'react'
+import { supabaseUserToAppUser } from '@/types'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
@@ -72,7 +72,13 @@ export async function signIn(email: string, password: string) {
 export async function signInWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: `${window.location.origin}/chat` },
+    options: {
+      redirectTo: `${window.location.origin}/auth/callback`,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+      },
+    },
   })
   if (error) throw error
   return data
@@ -81,7 +87,9 @@ export async function signInWithGoogle() {
 export async function signInWithGitHub() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'github',
-    options: { redirectTo: `${window.location.origin}/chat` },
+    options: {
+      redirectTo: `${window.location.origin}/auth/callback`,
+    },
   })
   if (error) throw error
   return data
@@ -136,35 +144,53 @@ export function getPasswordStrength(password: string): { score: number; label: s
   return { score, label: 'Very Strong', color: '#d9a02a' }
 }
 
-// === Auth State Hook ===
+// === Centralized Auth Init ===
+// Call this once at app startup. It syncs Supabase session state into the
+// Zustand store so every component reads from the same source of truth.
 
-export function useAuth() {
-  const [user, setUser] = useState<User | null>(null)
-  const [session, setSession] = useState<Session | null>(null)
-  const [loading, setLoading] = useState(true)
+let authListenerUnsub: (() => void) | null = null
 
-  const refresh = useCallback(async () => {
-    const currentSession = await getSession()
-    setSession(currentSession)
-    setUser(currentSession?.user ?? null)
-    setLoading(false)
-  }, [])
+export function initAuth() {
+  // Prevent double-init
+  if (authListenerUnsub) return
 
-  useEffect(() => {
-    refresh()
+  // Dynamically import store to avoid circular dep
+  import('@/store').then(({ useStore }) => {
+    const store = useStore.getState()
 
+    // Fetch initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      store.setUser(session?.user ? supabaseUserToAppUser(session.user) : null)
+      store.setAuthLoading(false)
+      store.setAuthInitialized(true)
+    })
+
+    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, newSession) => {
-        setSession(newSession)
-        setUser(newSession?.user ?? null)
-        setLoading(false)
+      (_event, session) => {
+        const s = useStore.getState()
+        s.setUser(session?.user ? supabaseUserToAppUser(session.user) : null)
+        s.setAuthLoading(false)
+        s.setAuthInitialized(true)
       }
     )
 
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [refresh])
-
-  return { user, session, loading, refresh }
+    authListenerUnsub = () => subscription.unsubscribe()
+  })
 }
+
+export function destroyAuth() {
+  authListenerUnsub?.()
+  authListenerUnsub = null
+}
+
+// Legacy hook for backward compat — reads from store
+export function useAuth() {
+  // This is now just a convenience wrapper over the store
+  // The real auth state lives in Zustand, set by initAuth()
+  const { user, authLoading, authInitialized } = useStore()
+  return { user, loading: authLoading || !authInitialized, refresh: () => {} }
+}
+
+// Need to import useStore here for useAuth
+import { useStore } from '@/store'

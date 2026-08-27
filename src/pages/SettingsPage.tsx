@@ -4,11 +4,10 @@ import { motion } from 'framer-motion'
 import { ChevronLeft, User, Bell, Shield, Palette, Key, Trash2, Save, Mail, CheckCircle, Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useStore } from '@/store'
-import { supabase, getCurrentUser, useAuth } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 
 export default function SettingsPage() {
-  const { theme, toggleTheme } = useStore()
-  const { user } = useAuth()
+  const { theme, toggleTheme, user, setUser } = useStore()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [notifications, setNotifications] = useState(true)
@@ -19,20 +18,28 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (user) {
-      setName(user.user_metadata?.name || user.email?.split('@')[0] || '')
+      setName(user.name || '')
       setEmail(user.email || '')
-      setEmailVerified(user.email_confirmed_at != null)
     }
+    // Check email verification from Supabase directly
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        setEmailVerified(data.user.email_confirmed_at != null)
+      }
+    })
   }, [user])
 
   const handleSave = async () => {
     setSaving(true)
     try {
-      if (user && name !== (user.user_metadata?.name || '')) {
+      const { data: { user: sbUser } } = await supabase.auth.getUser()
+      if (sbUser && name !== (sbUser.user_metadata?.name || '')) {
         const { error } = await supabase.auth.updateUser({
           data: { name }
         })
         if (error) throw error
+        // Update store user
+        setUser({ ...user!, name })
       }
       toast.success('Settings saved')
     } catch (err: any) {
