@@ -39,7 +39,7 @@ export default function SettingsPage() {
         })
         if (error) throw error
         // Update store user
-        setUser({ ...user!, name })
+        if (user) setUser({ ...user, name })
       }
       toast.success('Settings saved')
     } catch (err: any) {
