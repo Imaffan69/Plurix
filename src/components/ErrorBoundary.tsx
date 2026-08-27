@@ -30,26 +30,26 @@ export default class ErrorBoundary extends Component<Props, State> {
       if (this.props.fallback) return this.props.fallback
 
       return (
-        <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center px-6">
-          <div className="text-center max-w-md">
-            <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mx-auto mb-6">
-              <AlertTriangle size={32} className="text-red-400" />
+        <div className="min-h-screen bg-black flex items-center justify-center px-5">
+          <div className="text-center max-w-sm">
+            <div className="w-14 h-14 rounded-2xl bg-red-500/[0.08] flex items-center justify-center mx-auto mb-5">
+              <AlertTriangle size={26} className="text-red-400/70" />
             </div>
-            <h1 className="text-2xl font-bold mb-2">Something went wrong</h1>
-            <p className="text-white/40 text-sm mb-2">
+            <h1 className="text-xl font-bold mb-1.5">Something went wrong</h1>
+            <p className="text-white/30 text-[13px] mb-1">
               {this.state.error?.message || 'An unexpected error occurred.'}
             </p>
-            <p className="text-white/25 text-xs mb-8">
-              If this keeps happening, try clearing your browser cache or contact support.
+            <p className="text-white/15 text-[11px] mb-7">
+              If this keeps happening, try clearing your browser cache.
             </p>
             <button
               onClick={() => {
                 this.setState({ hasError: false, error: null })
                 window.location.reload()
               }}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold text-sm hover:shadow-lg hover:shadow-blue-500/20 transition-all"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-gold-400 to-gold-600 text-black font-semibold text-[13px] hover:shadow-lg hover:shadow-gold-400/20 transition-all"
             >
-              <RefreshCw size={16} />
+              <RefreshCw size={14} />
               Reload App
             </button>
           </div>

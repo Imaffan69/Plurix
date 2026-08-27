@@ -1,8 +1,8 @@
 import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Plus, MessageSquare, Settings, Shield, LogOut, 
-  Wrench, ChevronLeft, User, HelpCircle 
+import {
+  Plus, MessageSquare, Settings, Shield, LogOut,
+  Wrench, ChevronLeft, Search
 } from 'lucide-react'
 import { useStore } from '@/store'
 import { signOut } from '@/lib/supabase'
@@ -23,42 +23,50 @@ export default function Sidebar() {
       {sidebarOpen && (
         <motion.aside
           initial={{ width: 0, opacity: 0 }}
-          animate={{ width: 280, opacity: 1 }}
+          animate={{ width: 260, opacity: 1 }}
           exit={{ width: 0, opacity: 0 }}
           transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          className="h-screen border-r border-white/5 bg-[#0c0c14] flex flex-col overflow-hidden shrink-0"
+          className="h-screen border-r border-white/[0.04] bg-surface-800 flex flex-col overflow-hidden shrink-0"
         >
           {/* Header */}
-          <div className="h-14 flex items-center justify-between px-4 border-b border-white/5 shrink-0">
-            <Link to="/" className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-black text-sm">
+          <div className="h-[52px] flex items-center justify-between px-4 border-b border-white/[0.04] shrink-0">
+            <Link to="/" className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-[7px] bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center text-black font-bold text-[11px]">
                 P
               </div>
-              <span className="font-semibold text-sm">Plurix</span>
+              <span className="font-semibold text-[13px]">Plurix</span>
             </Link>
-            <button onClick={toggleSidebar} className="p-1.5 rounded-lg hover:bg-white/5 text-white/40">
-              <ChevronLeft size={16} />
+            <button onClick={toggleSidebar} className="p-1.5 rounded-lg hover:bg-white/[0.05] text-white/30 hover:text-white/60 transition-colors">
+              <ChevronLeft size={14} />
+            </button>
+          </div>
+
+          {/* Search */}
+          <div className="p-2.5 shrink-0">
+            <button className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] text-[12px] text-white/30 transition-colors">
+              <Search size={13} />
+              Search conversations...
             </button>
           </div>
 
           {/* New Chat */}
-          <div className="p-3 shrink-0">
-            <Link 
+          <div className="px-2.5 pb-1 shrink-0">
+            <Link
               to="/chat"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-sm text-white/80 transition-colors"
+              className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-gold-400/[0.08] hover:bg-gold-400/[0.12] text-[12px] text-gold-400/80 transition-colors font-medium"
             >
-              <Plus size={16} />
+              <Plus size={14} />
               New Chat
             </Link>
           </div>
 
-          {/* Conversation History */}
-          <div className="flex-1 overflow-y-auto px-3 pb-3">
-            <div className="text-[10px] uppercase tracking-wider text-white/20 font-medium px-3 mb-2">
+          {/* Conversations */}
+          <div className="flex-1 overflow-y-auto px-2.5 py-2">
+            <div className="text-[10px] uppercase tracking-wider text-white/15 font-semibold px-2.5 mb-1.5">
               Recent
             </div>
             {conversations.length === 0 ? (
-              <div className="text-center py-8 text-white/20 text-xs">
+              <div className="text-center py-8 text-white/15 text-[11px]">
                 No conversations yet
               </div>
             ) : (
@@ -66,13 +74,13 @@ export default function Sidebar() {
                 <Link
                   key={conv.id}
                   to={`/chat/${conv.id}`}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors mb-0.5 ${
+                  className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[12px] transition-colors mb-0.5 ${
                     activeConversation === conv.id
-                      ? 'bg-white/10 text-white'
-                      : 'text-white/50 hover:bg-white/5 hover:text-white/70'
+                      ? 'bg-white/[0.06] text-white/80'
+                      : 'text-white/35 hover:bg-white/[0.03] hover:text-white/60'
                   }`}
                 >
-                  <MessageSquare size={14} className="shrink-0" />
+                  <MessageSquare size={12} className="shrink-0" />
                   <span className="truncate">{conv.title}</span>
                 </Link>
               ))
@@ -80,26 +88,26 @@ export default function Sidebar() {
           </div>
 
           {/* Footer Nav */}
-          <div className="border-t border-white/5 p-3 space-y-1 shrink-0">
+          <div className="border-t border-white/[0.04] p-2.5 space-y-0.5 shrink-0">
             {navItems.map(item => (
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors ${
+                className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[12px] transition-colors ${
                   location.pathname === item.path
-                    ? 'bg-white/10 text-white'
-                    : 'text-white/40 hover:bg-white/5 hover:text-white/70'
+                    ? 'bg-white/[0.06] text-white/80'
+                    : 'text-white/30 hover:bg-white/[0.03] hover:text-white/60'
                 }`}
               >
-                <item.icon size={16} />
+                <item.icon size={13} />
                 {item.label}
               </Link>
             ))}
             <button
               onClick={() => { signOut(); window.location.href = '/' }}
-              className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-white/30 hover:bg-white/5 hover:text-red-400 transition-colors w-full"
+              className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[12px] text-white/20 hover:bg-white/[0.03] hover:text-red-400/70 transition-colors w-full"
             >
-              <LogOut size={16} />
+              <LogOut size={13} />
               Sign Out
             </button>
           </div>

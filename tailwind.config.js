@@ -5,35 +5,32 @@ export default {
   theme: {
     extend: {
       colors: {
+        gold: {
+          50: '#fdf9ef',
+          100: '#f9f0d3',
+          200: '#f3dea5',
+          300: '#ebc86e',
+          400: '#e4b343',
+          500: '#d9a02a',
+          600: '#c07f1e',
+          700: '#a05f1b',
+          800: '#834c1d',
+          900: '#6c3f1c',
+        },
         glass: {
-          50: 'rgba(255, 255, 255, 0.05)',
-          100: 'rgba(255, 255, 255, 0.1)',
-          200: 'rgba(255, 255, 255, 0.15)',
-          300: 'rgba(255, 255, 255, 0.2)',
-        },
-        primary: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
-        },
-        accent: {
-          violet: '#8b5cf6',
-          cyan: '#06b6d4',
-          emerald: '#10b981',
-          rose: '#f43f5e',
-          amber: '#f59e0b',
+          50: 'rgba(255, 255, 255, 0.03)',
+          100: 'rgba(255, 255, 255, 0.06)',
+          200: 'rgba(255, 255, 255, 0.1)',
+          300: 'rgba(255, 255, 255, 0.15)',
         },
         surface: {
-          dark: '#0a0a0f',
-          card: 'rgba(15, 15, 25, 0.8)',
-          elevated: 'rgba(25, 25, 40, 0.9)',
+          900: '#000000',
+          800: '#0a0a0c',
+          700: '#111114',
+          600: '#18181c',
+          500: '#1f1f24',
+          400: '#2a2a30',
+          300: '#38383f',
         },
       },
       backdropBlur: {
@@ -41,42 +38,32 @@ export default {
         '2xl': '40px',
         '3xl': '64px',
       },
+      fontFamily: {
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        mono: ['JetBrains Mono', 'SF Mono', 'monospace'],
+      },
+      borderRadius: {
+        '2xl': '1rem',
+        '3xl': '1.25rem',
+        '4xl': '1.5rem',
+      },
       animation: {
         'glow': 'glow 2s ease-in-out infinite alternate',
         'float': 'float 6s ease-in-out infinite',
-        'slide-up': 'slideUp 0.5s ease-out',
-        'slide-down': 'slideDown 0.3s ease-out',
-        'fade-in': 'fadeIn 0.5s ease-out',
-        'scale-in': 'scaleIn 0.3s ease-out',
         'shimmer': 'shimmer 2s linear infinite',
         'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'gradient': 'gradient 8s ease infinite',
-        'border-flow': 'borderFlow 3s linear infinite',
+        'fade-in': 'fadeIn 0.5s ease-out',
+        'slide-up': 'slideUp 0.5s ease-out',
       },
       keyframes: {
         glow: {
-          '0%': { boxShadow: '0 0 20px rgba(59, 130, 246, 0.3)' },
-          '100%': { boxShadow: '0 0 40px rgba(139, 92, 246, 0.5)' },
+          '0%': { boxShadow: '0 0 20px rgba(217, 160, 42, 0.15)' },
+          '100%': { boxShadow: '0 0 40px rgba(217, 160, 42, 0.3)' },
         },
         float: {
           '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-20px)' },
-        },
-        slideUp: {
-          '0%': { transform: 'translateY(20px)', opacity: '0' },
-          '100%': { transform: 'translateY(0)', opacity: '1' },
-        },
-        slideDown: {
-          '0%': { transform: 'translateY(-10px)', opacity: '0' },
-          '100%': { transform: 'translateY(0)', opacity: '1' },
-        },
-        fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
-        },
-        scaleIn: {
-          '0%': { transform: 'scale(0.95)', opacity: '0' },
-          '100%': { transform: 'scale(1)', opacity: '1' },
+          '50%': { transform: 'translateY(-10px)' },
         },
         shimmer: {
           '0%': { backgroundPosition: '-200% 0' },
@@ -86,13 +73,14 @@ export default {
           '0%, 100%': { backgroundPosition: '0% 50%' },
           '50%': { backgroundPosition: '100% 50%' },
         },
-        borderFlow: {
-          '0%': { backgroundPosition: '0% 0%' },
-          '100%': { backgroundPosition: '200% 0%' },
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
         },
-      },
-      backgroundSize: {
-        '300%': '300% 300%',
+        slideUp: {
+          '0%': { transform: 'translateY(20px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
       },
     },
   },

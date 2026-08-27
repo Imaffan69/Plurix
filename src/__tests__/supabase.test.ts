@@ -6,13 +6,11 @@ vi.stubEnv('VITE_SUPABASE_ANON_KEY', '')
 
 // Mock @supabase/supabase-js to track calls
 const mockCreateClient = vi.fn()
-vi.mock('@supabase/supabase-js', () => ({
-  createClient: (...args: any[]) => mockCreateClient(...args),
-}))
+vi.mock('@supabase/supabase-js', () => ({ createClient: (...args: any[]) => mockCreateClient(...args) }))
 
 describe('Supabase safe client', () => {
   beforeEach(() => {
-    vi.resetModules()
+    vi.restoreAllMocks()
     mockCreateClient.mockReset()
     vi.stubEnv('VITE_SUPABASE_URL', '')
     vi.stubEnv('VITE_SUPABASE_ANON_KEY', '')
@@ -21,10 +19,8 @@ describe('Supabase safe client', () => {
   it('does NOT call real createClient when env vars are missing', async () => {
     const { supabase } = await import('@/lib/supabase')
 
-    // Should NOT have called the real createClient
     expect(mockCreateClient).not.toHaveBeenCalled()
 
-    // The proxy should expose auth without throwing
     expect(supabase).toBeDefined()
     expect(supabase.auth).toBeDefined()
     expect(typeof supabase.auth.signInWithPassword).toBe('function')
@@ -49,7 +45,6 @@ describe('Supabase safe client', () => {
     expect(data).toBeDefined()
     expect(data.subscription).toBeDefined()
     expect(typeof data.subscription.unsubscribe).toBe('function')
-    // Should not throw
     data.subscription.unsubscribe()
   })
 

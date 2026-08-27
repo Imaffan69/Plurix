@@ -1,9 +1,10 @@
-import { describe, it, expect, vi } from 'vitest'
+// @vitest-environment jsdom
+import { describe, it, expect, vi, afterAll } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import ErrorBoundary from '@/components/ErrorBoundary'
 
 // Component that throws on render
-function ThrowingComponent() {
+function ThrowingComponent(): React.ReactElement {
   throw new Error('Test crash')
 }
 
@@ -13,7 +14,6 @@ function GoodComponent() {
 }
 
 describe('ErrorBoundary', () => {
-  // Suppress console.error from React error boundary
   const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
   afterAll(() => spy.mockRestore())

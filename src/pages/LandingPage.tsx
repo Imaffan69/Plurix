@@ -1,266 +1,266 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { 
-  Sparkles, ArrowRight, Zap, Globe, Shield, Brain,
-  MessageSquare, Code, Image, Search, ChevronRight, Star
+import {
+  ArrowRight, Zap, Globe, Shield, Brain,
+  MessageSquare, Code, Image, Search, ChevronRight, Sparkles,
+  Lock, Cpu, Layers, ArrowUpRight
 } from 'lucide-react'
 
 const fadeIn = {
-  hidden: { opacity: 0, y: 30 },
+  hidden: { opacity: 0, y: 24 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
 }
 
 const stagger = {
-  visible: { transition: { staggerChildren: 0.1 } },
+  visible: { transition: { staggerChildren: 0.06 } },
 }
 
 const models = [
-  { name: 'Gemini 2.5 Pro', icon: '✦', color: '#4285f4' },
-  { name: 'GPT-4o Mini', icon: '⚡', color: '#10b981' },
-  { name: 'Claude 3.5', icon: '🧠', color: '#d97706' },
-  { name: 'Llama 3.3', icon: '🦙', color: '#7c3aed' },
-  { name: 'DeepSeek V3', icon: '🔍', color: '#06b6d4' },
-  { name: 'Mistral', icon: '💨', color: '#ef4444' },
-  { name: 'Qwen Turbo', icon: '🌊', color: '#6366f1' },
-  { name: 'Mixtral', icon: '🌀', color: '#f97316' },
+  { name: 'Gemini 2.5 Pro', provider: 'Google' },
+  { name: 'GPT-4o Mini', provider: 'OpenAI' },
+  { name: 'Claude 3.5', provider: 'Anthropic' },
+  { name: 'Llama 3.3', provider: 'Meta' },
+  { name: 'DeepSeek V3', provider: 'DeepSeek' },
+  { name: 'Mistral Large', provider: 'Mistral' },
+  { name: 'Qwen Turbo', provider: 'Alibaba' },
+  { name: 'Mixtral 8x7B', provider: 'Mistral' },
 ]
 
 const features = [
-  { icon: Brain, title: '10+ AI Models', desc: 'Switch between GPT, Claude, Gemini, Llama, and more — all in one place.' },
+  { icon: Brain, title: '10+ AI Models', desc: 'Switch between GPT, Claude, Gemini, Llama, and more in one place.' },
   { icon: Zap, title: 'Instant Responses', desc: 'Ultra-fast inference via Groq and optimized APIs. No waiting.' },
-  { icon: Shield, title: 'Private & Secure', desc: 'Your conversations stay yours. End-to-end encryption, no data selling.' },
-  { icon: Code, title: 'Code Playground', desc: 'Write, run, and debug code directly in the chat. Multiple languages.' },
-  { icon: Image, title: 'Image Generation', desc: 'Create stunning images with DALL-E, Stable Diffusion, and Flux.' },
-  { icon: Globe, title: 'Web Search', desc: 'Real-time web search with cited sources. Always up to date.' },
+  { icon: Shield, title: 'Private & Secure', desc: 'Your conversations stay yours. No data selling, ever.' },
+  { icon: Code, title: 'Code Playground', desc: 'Write and run code directly in the chat. Multiple languages.' },
+  { icon: Image, title: 'Image Generation', desc: 'Create images with DALL-E, Stable Diffusion, and Flux.' },
+  { icon: Globe, title: 'Web Search', desc: 'Real-time web search with cited sources. Always current.' },
   { icon: MessageSquare, title: 'File Analysis', desc: 'Upload PDFs, images, and docs. Plurix reads and analyzes them.' },
-  { icon: Search, title: 'Smart Reasoning', desc: 'Chain-of-thought prompting for complex problems and research.' },
+  { icon: Search, title: 'Smart Reasoning', desc: 'Chain-of-thought prompting for complex problems.' },
 ]
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white overflow-hidden">
-      {/* Background Effects */}
+    <div className="min-h-screen bg-black text-white overflow-hidden">
+      {/* Background */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-gradient-to-b from-blue-500/10 via-purple-500/5 to-transparent rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-gradient-to-t from-cyan-500/5 to-transparent rounded-full blur-3xl" />
-        <div className="absolute inset-0 dot-grid opacity-30" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-gold-400/[0.02] rounded-full blur-[150px]" />
+        <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-gold-400/[0.01] rounded-full blur-[120px]" />
+        <div className="absolute inset-0 dot-grid opacity-40" />
       </div>
 
-      {/* Navbar */}
-      <motion.nav 
-        initial={{ opacity: 0, y: -20 }}
+      {/* Nav */}
+      <motion.nav
+        initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="fixed top-0 left-0 right-0 z-50 px-6 py-4"
+        transition={{ duration: 0.5 }}
+        className="fixed top-0 left-0 right-0 z-50 px-5 py-3"
       >
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-black text-lg">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-[9px] bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center text-black font-bold text-sm">
               P
             </div>
-            <span className="text-xl font-bold tracking-tight">Plurix</span>
+            <span className="text-lg font-bold tracking-tight">Plurix</span>
           </Link>
-          <div className="hidden md:flex items-center gap-8 text-sm text-white/60">
-            <a href="#features" className="hover:text-white transition-colors">Features</a>
-            <a href="#models" className="hover:text-white transition-colors">Models</a>
-            <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
-            <Link to="/terms" className="hover:text-white transition-colors">Terms</Link>
+          <div className="hidden md:flex items-center gap-7 text-[13px] text-white/40">
+            <a href="#features" className="hover:text-white/80 transition-colors">Features</a>
+            <a href="#models" className="hover:text-white/80 transition-colors">Models</a>
+            <a href="#security" className="hover:text-white/80 transition-colors">Security</a>
+            <Link to="/terms" className="hover:text-white/80 transition-colors">Terms</Link>
           </div>
-          <div className="flex items-center gap-3">
-            <Link to="/auth" className="btn-ghost text-sm">Sign In</Link>
-            <Link to="/auth" className="btn-primary text-sm">
-              Get Started Free <ArrowRight size={16} />
+          <div className="flex items-center gap-2">
+            <Link to="/auth" className="btn-ghost text-[13px]">Sign In</Link>
+            <Link to="/auth" className="btn-primary text-[13px]">
+              Get Started <ArrowRight size={14} />
             </Link>
           </div>
         </div>
       </motion.nav>
 
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 px-6">
-        <div className="max-w-5xl mx-auto text-center">
+      {/* Hero */}
+      <section className="relative pt-28 pb-16 px-5">
+        <div className="max-w-4xl mx-auto text-center">
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-8 text-sm text-white/70">
-              <Sparkles size={14} className="text-purple-400" />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass mb-7 text-[12px] text-white/50">
+              <div className="w-1.5 h-1.5 rounded-full bg-gold-400 animate-pulse" />
               One AI. Every Model. Zero Cost.
             </div>
-            
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black leading-[0.95] tracking-tight mb-6">
-              <span className="block">The last AI</span>
-              <span className="block gradient-text">assistant you'll need.</span>
+
+            <h1 className="text-[3.2rem] sm:text-[4rem] md:text-[5rem] font-black leading-[0.92] tracking-[-0.03em] mb-5">
+              <span className="block text-white/90">The last AI</span>
+              <span className="block text-gold-gradient">assistant you need.</span>
             </h1>
-            
-            <p className="text-lg md:text-xl text-white/50 max-w-2xl mx-auto mb-10 leading-relaxed">
-              Chat with GPT-4o, Claude, Gemini, Llama, DeepSeek, and more — 
-              all from one beautiful interface. Free. Fast. Powerful.
+
+            <p className="text-[15px] md:text-base text-white/35 max-w-lg mx-auto mb-8 leading-relaxed">
+              Chat with GPT-4o, Claude, Gemini, Llama, DeepSeek, and more —
+              all from one interface. Free. Fast. Powerful.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/auth" className="btn-primary text-base px-8 py-4 rounded-2xl">
-                Start Chatting Free <ArrowRight size={18} />
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link to="/auth" className="btn-primary text-[14px] px-7 py-2.5 rounded-xl">
+                Start Chatting Free <ArrowRight size={15} />
               </Link>
-              <a href="#features" className="btn-ghost text-base px-8 py-4 rounded-2xl">
-                See What's Inside <ChevronRight size={18} />
+              <a href="#features" className="btn-secondary text-[14px] px-7 py-2.5 rounded-xl">
+                See What's Inside <ChevronRight size={15} />
               </a>
             </div>
           </motion.div>
 
-          {/* Floating Model Cards */}
-          <motion.div 
+          {/* Model tags */}
+          <motion.div
             variants={stagger}
             initial="hidden"
             animate="visible"
-            className="mt-20 flex flex-wrap justify-center gap-3"
+            className="mt-14 flex flex-wrap justify-center gap-2"
           >
-            {models.map((m, i) => (
+            {models.map((m) => (
               <motion.div
                 key={m.name}
                 variants={fadeIn}
-                className="glass-card px-4 py-3 flex items-center gap-2 text-sm"
-                whileHover={{ scale: 1.05, borderColor: m.color + '40' }}
+                className="glass px-3.5 py-2 flex items-center gap-2 text-[12px] rounded-full"
               >
-                <span className="text-lg">{m.icon}</span>
-                <span className="text-white/70">{m.name}</span>
+                <span className="text-white/50">{m.name}</span>
+                <span className="text-white/20">·</span>
+                <span className="text-white/25">{m.provider}</span>
               </motion.div>
             ))}
           </motion.div>
         </div>
       </section>
 
-      {/* Features Grid */}
-      <section id="features" className="py-24 px-6">
-        <div className="max-w-6xl mx-auto">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+      {/* Features */}
+      <section id="features" className="py-20 px-5">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-14"
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              Everything you need. <span className="gradient-text">Nothing you don't.</span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-3 tracking-tight">
+              Everything you need. <span className="text-gold-gradient">Nothing you don't.</span>
             </h2>
-            <p className="text-white/50 text-lg max-w-xl mx-auto">
+            <p className="text-white/35 text-[15px] max-w-md mx-auto">
               Built for power users who want the best AI tools without the bloat.
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
             {features.map((f, i) => (
               <motion.div
                 key={f.title}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="glass-card p-6 group cursor-default"
-                whileHover={{ y: -4 }}
+                transition={{ delay: i * 0.05 }}
+                className="glass-card p-5 group"
+                whileHover={{ y: -2 }}
               >
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <f.icon size={22} className="text-blue-400" />
+                <div className="w-10 h-10 rounded-xl bg-gold-400/[0.06] flex items-center justify-center mb-3 group-hover:bg-gold-400/[0.1] transition-colors">
+                  <f.icon size={18} className="text-gold-400/70" />
                 </div>
-                <h3 className="font-semibold text-lg mb-2">{f.title}</h3>
-                <p className="text-white/40 text-sm leading-relaxed">{f.desc}</p>
+                <h3 className="font-semibold text-[14px] mb-1">{f.title}</h3>
+                <p className="text-white/30 text-[13px] leading-relaxed">{f.desc}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Models Section */}
-      <section id="models" className="py-24 px-6">
-        <div className="max-w-6xl mx-auto">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+      {/* Models */}
+      <section id="models" className="py-20 px-5">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-14"
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              Pick any model. <span className="gradient-text">They're all free.</span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-3 tracking-tight">
+              Pick any model. <span className="text-gold-gradient">They're all free.</span>
             </h2>
-            <p className="text-white/50 text-lg max-w-xl mx-auto">
+            <p className="text-white/35 text-[15px] max-w-md mx-auto">
               No credits. No limits. Just pick a model and start talking.
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid sm:grid-cols-2 gap-3">
             {models.map((m, i) => (
               <motion.div
                 key={m.name}
-                initial={{ opacity: 0, x: i % 2 === 0 ? -20 : 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.08 }}
-                className="glass-card p-5 flex items-center gap-4 group cursor-default"
-                whileHover={{ borderColor: m.color + '30' }}
+                transition={{ delay: i * 0.04 }}
+                className="glass-card p-4 flex items-center gap-3.5 group"
               >
-                <div 
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shrink-0"
-                  style={{ background: m.color + '15' }}
-                >
-                  {m.icon}
+                <div className="w-10 h-10 rounded-xl bg-white/[0.04] flex items-center justify-center shrink-0 group-hover:bg-white/[0.07] transition-colors">
+                  <Brain size={16} className="text-white/40" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold">{m.name}</h3>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-medium">
-                      FREE
+                    <h3 className="font-semibold text-[13px]">{m.name}</h3>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-gold-400/10 text-gold-400 font-semibold uppercase tracking-wider">
+                      Free
                     </span>
                   </div>
-                  <p className="text-white/40 text-sm mt-0.5">{m.name.split(' ')[0]} — {m.name}</p>
+                  <p className="text-white/25 text-[12px] mt-0.5">{m.provider}</p>
                 </div>
-                <div 
-                  className="w-2 h-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ background: m.color }}
-                />
+                <ArrowUpRight size={14} className="text-white/10 group-hover:text-white/30 transition-colors shrink-0" />
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Pricing / CTA */}
-      <section id="pricing" className="py-24 px-6">
-        <div className="max-w-4xl mx-auto">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+      {/* Security */}
+      <section id="security" className="py-20 px-5">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="glass-card p-12 text-center gradient-border"
+            className="glass-card p-10 text-center border-glow"
           >
-            <div className="inline-flex items-center gap-1 text-amber-400 mb-4">
-              {[...Array(5)].map((_, i) => <Star key={i} size={16} fill="currentColor" />)}
+            <div className="w-14 h-14 rounded-2xl bg-gold-400/[0.06] flex items-center justify-center mx-auto mb-5">
+              <Lock size={24} className="text-gold-400/70" />
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              Completely free. <span className="gradient-text">Seriously.</span>
+            <h2 className="text-2xl md:text-3xl font-bold mb-3 tracking-tight">
+              Your data, <span className="text-gold-gradient">your business.</span>
             </h2>
-            <p className="text-white/50 text-lg max-w-lg mx-auto mb-8">
-              No hidden fees. No premium tier. No data selling. Just a free AI assistant 
-              that happens to be better than paid ones.
+            <p className="text-white/35 text-[14px] max-w-lg mx-auto mb-8 leading-relaxed">
+              We don't sell your data. We don't train on your prompts. We don't share your information.
+              Your conversations are encrypted and stored securely.
             </p>
-            <Link to="/auth" className="btn-primary text-lg px-10 py-4 rounded-2xl">
-              Start Using Plurix <ArrowRight size={18} />
-            </Link>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link to="/auth" className="btn-primary text-[14px] px-7 py-2.5 rounded-xl">
+                Start Using Plurix <ArrowRight size={15} />
+              </Link>
+              <Link to="/privacy" className="btn-secondary text-[14px] px-7 py-2.5 rounded-xl">
+                Read Our Privacy Policy
+              </Link>
+            </div>
           </motion.div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/5 py-12 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-black text-sm">
+      <footer className="border-t border-white/[0.04] py-10 px-5">
+        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-5">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-[7px] bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center text-black font-bold text-[11px]">
               P
             </div>
-            <span className="font-semibold">Plurix</span>
-            <span className="text-white/30 text-sm">© 2026</span>
+            <span className="font-semibold text-[14px]">Plurix</span>
+            <span className="text-white/20 text-[12px]">© 2026</span>
           </div>
-          <div className="flex items-center gap-6 text-sm text-white/40">
-            <Link to="/terms" className="hover:text-white transition-colors">Terms</Link>
-            <Link to="/privacy" className="hover:text-white transition-colors">Privacy</Link>
-            <a href="mailto:hello@plurix.app" className="hover:text-white transition-colors">Contact</a>
+          <div className="flex items-center gap-6 text-[12px] text-white/30">
+            <Link to="/terms" className="hover:text-white/60 transition-colors">Terms</Link>
+            <Link to="/privacy" className="hover:text-white/60 transition-colors">Privacy</Link>
+            <a href="mailto:hello@plurix.app" className="hover:text-white/60 transition-colors">Contact</a>
           </div>
         </div>
       </footer>

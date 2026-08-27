@@ -12,17 +12,28 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <BrowserRouter>
         <App />
         <Toaster
-        position="top-right"
-        toastOptions={{
-          style: {
-            background: 'rgba(15, 15, 25, 0.9)',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            color: '#fff',
-            borderRadius: '16px',
-          },
-        }}
-      />
+          position="top-center"
+          toastOptions={{
+            duration: 3000,
+            style: {
+              background: 'rgba(18, 18, 22, 0.95)',
+              backdropFilter: 'blur(40px)',
+              border: '0.5px solid rgba(255,255,255,0.08)',
+              color: '#f5f5f5',
+              borderRadius: '12px',
+              fontSize: '13px',
+              fontWeight: '500',
+              padding: '10px 16px',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+            },
+            success: {
+              iconTheme: { primary: '#d9a02a', secondary: '#000' },
+            },
+            error: {
+              iconTheme: { primary: '#ef4444', secondary: '#000' },
+            },
+          }}
+        />
       </BrowserRouter>
     </ErrorBoundary>
   </React.StrictMode>
