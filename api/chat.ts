@@ -4,28 +4,27 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 type Provider = 'groq' | 'openrouter' | 'gemini'
 
 const MODELS: Record<string, { provider: Provider; modelName: string }> = {
-  // Groq models
+  // ── Groq Production ──
   'gpt-oss-120b':           { provider: 'groq', modelName: 'openai/gpt-oss-120b' },
-  'llama-4-maverick':       { provider: 'groq', modelName: 'meta-llama/llama-4-maverick-17b-128e-instruct' },
-  'llama-4-scout':          { provider: 'groq', modelName: 'meta-llama/llama-4-scout-17b-16e-instruct' },
-  'llama-3.3-70b':          { provider: 'groq', modelName: 'llama-3.3-70b-versatile' },
-  'deepseek-r1':            { provider: 'groq', modelName: 'deepseek-r1-distill-llama-70b' },
-  'deepseek-v3':            { provider: 'groq', modelName: 'deepseek-v3-0324' },
-  'qwen-3.8-27b':           { provider: 'groq', modelName: 'qwen-qwq-32b' },
-  'qwen-3.6-27b':           { provider: 'groq', modelName: 'qwen-2.5-32b-instruct' },
   'gpt-oss-20b':            { provider: 'groq', modelName: 'openai/gpt-oss-20b' },
-  'allam-2-7b':             { provider: 'groq', modelName: 'allam-2-7b' },
-  // Google Gemini
+  'llama-3.3-70b':          { provider: 'groq', modelName: 'llama-3.3-70b-versatile' },
+  'llama-3.1-8b':           { provider: 'groq', modelName: 'llama-3.1-8b-instant' },
+  // ── Groq Preview ──
+  'qwen-3.8-27b':           { provider: 'groq', modelName: 'qwen/qwen3.8-27b' },
+  'qwen-3.6-27b':           { provider: 'groq', modelName: 'qwen/qwen3.6-27b' },
+  'minimax-m2.7':           { provider: 'groq', modelName: 'minimaxai/minimax-m2.7' },
+  // ── Google Gemini ──
   'gemini-3.5-flash':       { provider: 'gemini', modelName: 'gemini-2.0-flash' },
-  // OpenRouter models
+  // ── OpenRouter Free ──
+  'llama-4-maverick':       { provider: 'openrouter', modelName: 'meta-llama/llama-4-maverick:free' },
+  'llama-4-scout':          { provider: 'openrouter', modelName: 'meta-llama/llama-4-scout:free' },
   'nemotron-ultra-550b':    { provider: 'openrouter', modelName: 'nvidia/nemotron-3-ultra-550b-a55b:free' },
   'nemotron-3.5-lightning': { provider: 'openrouter', modelName: 'nvidia/nemotron-3.5-lightning:free' },
   'nemotron-super-120b':    { provider: 'openrouter', modelName: 'nvidia/nemotron-3-super-120b-a12b:free' },
+  'deepseek-v4-flash':      { provider: 'openrouter', modelName: 'deepseek/deepseek-v4-flash:free' },
   'gemma-4-31b':            { provider: 'openrouter', modelName: 'google/gemma-4-31b-it:free' },
   'gemma-4-26b':            { provider: 'openrouter', modelName: 'google/gemma-4-26b-a4b-it:free' },
-  'minimax-m3':             { provider: 'openrouter', modelName: 'minimax/minimax-m3:free' },
   'cohere-north-mini':      { provider: 'openrouter', modelName: 'cohere/north-mini-code:free' },
-  'inkling':                { provider: 'openrouter', modelName: 'thinkingmachines/inkling:free' },
   'openrouter-free':        { provider: 'openrouter', modelName: 'openrouter/free' },
 }
 
@@ -105,21 +104,54 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!apiKey)
     return res.status(503).json({ error: `${config.provider.toUpperCase()}_API_KEY not configured.` })
 
-  // Inject file context into the last user message if files are attached
+  // Build file context — read files and format them for the AI
   let processedMessages = [...messages]
   if (files && Array.isArray(files) && files.length > 0) {
-    const fileContext = files.map((f: any) => {
-      const name = f.name || 'unknown'
-      const content = f.content || '(no content available)'
+    const fileParts: string[] = []
+    for (const f of files) {
+      const name = f.name || 'unknown-file'
       const type = f.type || 'unknown'
-      return `[File: ${name} (${type})]\n${content}`
-    }).join('\n\n')
+      const size = f.size || 0
+      const content = f.content || ''
 
-    const lastUserIdx = processedMessages.findLastIndex((m: any) => m.role === 'user')
-    if (lastUserIdx >= 0) {
-      processedMessages[lastUserIdx] = {
-        ...processedMessages[lastUserIdx],
-        content: `The user has attached the following files:\n\n${fileContext}\n\n---\n\nUser message: ${processedMessages[lastUserIdx].content}`,
+      if (content && content.trim()) {
+        // Truncate very large files to avoid context overflow
+        const maxChars = 50000
+        const truncated = content.length > maxChars
+          ? content.substring(0, maxChars) + `\n\n... [truncated, ${content.length} total chars]`
+          : content
+        fileParts.push(`📄 File: ${name} (${type}, ${Math.round(size / 1024)}KB)\n\`\`\`\n${truncated}\n\`\`\``)
+      } else {
+        fileParts.push(`📄 File: ${name} (${type}, ${Math.round(size / 1024)}KB) — binary file, content not readable as text`)
+      }
+    }
+
+    if (fileParts.length > 0) {
+      const fileContext = fileParts.join('\n\n')
+
+      // Find the last user message and prepend file context
+      const lastUserIdx = processedMessages.findLastIndex((m: any) => m.role === 'user')
+      if (lastUserIdx >= 0) {
+        const originalContent = processedMessages[lastUserIdx].content
+        processedMessages[lastUserIdx] = {
+          ...processedMessages[lastUserIdx],
+          content: `The user has attached ${files.length} file(s) for you to analyze:\n\n${fileContext}\n\n---\n\nUser's message: ${originalContent}`,
+        }
+      } else {
+        // No user message yet — add one with the files
+        processedMessages.push({
+          role: 'user',
+          content: `Please analyze these attached files:\n\n${fileContext}`,
+        })
+      }
+
+      // Add a system instruction to ensure the AI reads the files
+      const hasSystem = processedMessages.some((m: any) => m.role === 'system')
+      if (!hasSystem) {
+        processedMessages.unshift({
+          role: 'system',
+          content: 'The user has attached files. Read and analyze them carefully. Reference specific content from the files in your response.',
+        })
       }
     }
   }
@@ -167,13 +199,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           'Authorization': `Bearer ${apiKey}`,
           ...(config.provider === 'openrouter' ? { 'HTTP-Referer': 'https://plurix.app', 'X-Title': 'Plurix' } : {}),
         },
-        body: JSON.stringify({ model: config.modelName, messages: processedMessages, temperature, max_tokens: 4096 }),
+        body: JSON.stringify({
+          model: config.modelName,
+          messages: processedMessages,
+          temperature,
+          max_tokens: 4096,
+        }),
       })
-      if (!apiRes.ok) {
-        const err = await apiRes.text()
-        throw new Error(`${config.provider} error ${apiRes.status}: ${err.substring(0, 200)}`)
-      }
+
       const data = await apiRes.json()
+
+      if (!apiRes.ok) {
+        const errMsg = data?.error?.message || data?.error || JSON.stringify(data).substring(0, 200)
+        throw new Error(`${config.provider} error ${apiRes.status}: ${errMsg}`)
+      }
+
       responseText = data.choices?.[0]?.message?.content || ''
     }
 
@@ -182,7 +222,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ text: responseText, model: config.modelName, provider: config.provider })
 
   } catch (err: any) {
-    console.error(`[api/chat] ${model}:`, err.message)
+    console.error(`[api/chat] ${model} (${config.provider}):`, err.message)
     return res.status(500).json({ error: err.message || 'Failed to generate response' })
   }
 }
