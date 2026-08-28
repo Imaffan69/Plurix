@@ -3,7 +3,6 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import LandingPage from '@/pages/LandingPage'
 import AuthPage from '@/pages/AuthPage'
 import ChatPage from '@/pages/ChatPage'
-import AdminPage from '@/pages/AdminPage'
 import ToolsPage from '@/pages/ToolsPage'
 import SettingsPage from '@/pages/SettingsPage'
 import TermsPage from '@/pages/TermsPage'
@@ -21,8 +20,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   // Still loading auth state — show minimal spinner
   if (authLoading || !authInitialized) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+    return (        <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
         <div className="w-6 h-6 border-2 border-white/10 border-t-white/40 rounded-full animate-spin" />
       </div>
     )
@@ -52,7 +50,6 @@ export default function App() {
       <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
       <Route path="/chat/:id" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
       <Route path="/tools" element={<ProtectedRoute><ToolsPage /></ProtectedRoute>} />
-      <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
@@ -103,8 +100,7 @@ function AuthCallback() {
   }
 
   if (!authInitialized) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+    return (        <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
         <div className="text-center">
           <div className="w-6 h-6 border-2 border-white/10 border-t-white/40 rounded-full animate-spin mx-auto mb-3" />
           <p className="text-white/30 text-sm">Signing you in...</p>

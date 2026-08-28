@@ -57,7 +57,6 @@ function assertConfigured(feature: string) {
   }
 }
 
-// === Helper: Update store from session ===
 function syncSessionToStore(session: Session | null) {
   const s = useStore.getState()
   s.setUser(session?.user ? supabaseUserToAppUser(session.user) : null)
@@ -67,112 +66,108 @@ function syncSessionToStore(session: Session | null) {
 
 // === Auth Functions ===
 
-/**
- * Sign up a new user with email + password.
- * This creates the account but does NOT handle email verification.
- * After signUp, the app should send an OTP code via sendOtp() for verification.
- */
 export async function signUp(email: string, password: string, name: string) {
   assertConfigured('Sign up')
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: {
-      data: { name },
-    },
+    options: { data: { name } },
   })
   if (error) throw error
   return data
 }
 
-/**
- * Sign in with email + password (existing users with confirmed email).
- */
 export async function signIn(email: string, password: string) {
   assertConfigured('Sign in')
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  })
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
   if (error) throw error
-  if (data?.user) {
-    syncSessionToStore(data.session)
-  }
+  if (data?.user) syncSessionToStore(data.session)
   return data
 }
 
-/**
- * Send a 6-digit OTP code to the user's email.
- * Works for both existing users (sign-in) and new users (sign-up verification).
- * Supabase sends a 6-digit code, NOT a magic link.
- */
 export async function sendOtp(email: string, shouldCreateUser = false) {
   assertConfigured('OTP')
   const { data, error } = await supabase.auth.signInWithOtp({
     email,
-    options: {
-      shouldCreateUser,
-    },
+    options: { shouldCreateUser },
   })
   if (error) throw error
   return data
 }
 
-/**
- * Verify a 6-digit OTP code sent to the user's email.
- * On success, signs the user in.
- */
 export async function verifyOtp(email: string, token: string) {
   assertConfigured('OTP verification')
-  const { data, error } = await supabase.auth.verifyOtp({
-    email,
-    token,
-    type: 'email',
-  })
+  const { data, error } = await supabase.auth.verifyOtp({ email, token, type: 'email' })
   if (error) throw error
-  if (data?.user) {
-    syncSessionToStore(data.session)
-  }
+  if (data?.user) syncSessionToStore(data.session)
   return data
 }
 
 /**
- * OAuth sign-in (Google/GitHub).
- * Supabase handles the full OAuth flow: redirect → provider → callback → session.
- * The redirectTo must be whitelisted in Supabase Dashboard → Authentication → URL Configuration.
+ * Google OAuth sign-in.
+ * Redirects to Google's login page, then back to /auth/callback.
+ * Requires:
+ * 1. Google provider ENABLED in Supabase Dashboard → Authentication → Providers → Google
+ * 2. Google Cloud OAuth Client ID + Secret pasted into Supabase
+ * 3. Callback URL in Google Cloud Console: https://<project-ref>.supabase.co/auth/v1/callback
+ * 4. Redirect URL in Supabase: https://plurix-ai.vercel.app/auth/callback
  */
 export async function signInWithGoogle() {
   assertConfigured('Google sign-in')
+
+  // Get the correct redirect URL based on environment
+  const redirectTo = `${window.location.origin}/auth/callback`
+
+  console.log('[Auth] Google sign-in initiating...', {
+    redirectTo,
+    origin: window.location.origin,
+    supabaseUrl,
+  })
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${window.location.origin}/auth/callback`,
+      redirectTo,
       skipBrowserRedirect: false,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+      },
     },
   })
-  if (error) throw error
+
+  if (error) {
+    console.error('[Auth] Google sign-in error:', error.message, error)
+    throw new Error(
+      `Google sign-in failed: ${error.message}. ` +
+      'Make sure Google provider is enabled in Supabase Dashboard → Authentication → Providers → Google, ' +
+      'and your Google Cloud OAuth credentials are correctly configured.'
+    )
+  }
+
+  console.log('[Auth] Google sign-in redirecting...', data)
   return data
 }
 
 export async function signInWithGitHub() {
   assertConfigured('GitHub sign-in')
+  const redirectTo = `${window.location.origin}/auth/callback`
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'github',
-    options: {
-      redirectTo: `${window.location.origin}/auth/callback`,
-      skipBrowserRedirect: false,
-    },
+    options: { redirectTo, skipBrowserRedirect: false },
   })
-  if (error) throw error
+
+  if (error) {
+    console.error('[Auth] GitHub sign-in error:', error.message)
+    throw new Error(`GitHub sign-in failed: ${error.message}. Make sure GitHub provider is enabled in Supabase.`)
+  }
+
   return data
 }
 
 export async function signOut() {
-  try {
-    if (isConfigured) await supabase.auth.signOut()
-  } catch {
-    // Ignore signOut errors — just clear local state
-  }
+  try { if (isConfigured) await supabase.auth.signOut() } catch {}
   useStore.getState().setUser(null)
   useStore.getState().setAuthLoading(false)
   useStore.getState().setAuthInitialized(true)
@@ -218,11 +213,10 @@ export function getPasswordStrength(password: string): { score: number; label: s
   if (/[0-9]/.test(password)) score++
   if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) score++
   if (password.length >= 16) score++
-
   if (score <= 2) return { score, label: 'Weak', color: '#ef4444' }
   if (score <= 4) return { score, label: 'Fair', color: '#f59e0b' }
   if (score <= 5) return { score, label: 'Strong', color: '#10b981' }
-  return { score, label: 'Very Strong', color: '#d9a02a' }
+  return { score, label: 'Very Strong', color: '#8b5cf6' }
 }
 
 // === Centralized Auth Init ===
@@ -237,20 +231,24 @@ export function initAuth() {
     s.setUser(null)
     s.setAuthLoading(false)
     s.setAuthInitialized(true)
-    console.warn('Supabase not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.')
+    console.warn('[Auth] Supabase not configured.')
     return
   }
 
-  // Fetch initial session (also handles OAuth callback token exchange via detectSessionInUrl)
-  supabase.auth.getSession().then(({ data: { session } }) => {
+  console.log('[Auth] Initializing...', { supabaseUrl })
+
+  supabase.auth.getSession().then(({ data: { session }, error }) => {
+    if (error) console.warn('[Auth] getSession error:', error.message)
+    console.log('[Auth] Initial session:', session ? 'active' : 'none')
     syncSessionToStore(session)
-  }).catch(() => {
+  }).catch((err) => {
+    console.error('[Auth] getSession failed:', err)
     syncSessionToStore(null)
   })
 
-  // Listen for auth state changes (handles OAuth callback, sign-in, sign-out)
   const { data: { subscription } } = supabase.auth.onAuthStateChange(
-    (_event, session) => {
+    (event, session) => {
+      console.log('[Auth] State change:', event, session ? 'session active' : 'no session')
       syncSessionToStore(session)
     }
   )

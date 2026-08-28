@@ -1,10 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import {
-  Mail, Lock, User, Eye, EyeOff, ArrowRight,
-  Github, Chrome, Loader2, Check, X, Shield, KeyRound, ArrowLeft
-} from 'lucide-react'
+import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Github, Chrome, Loader2, Check, X, Shield, KeyRound, ArrowLeft } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { signUp, signIn, signInWithGoogle, signInWithGitHub, validatePassword, getPasswordStrength, sendOtp, verifyOtp } from '@/lib/supabase'
 import { useStore } from '@/store'
@@ -61,15 +58,9 @@ export default function AuthPage() {
           setMode('otp-verify')
           setOtpSent(true)
           setOtpCountdown(60)
-        } catch {
-          toast.error('Invalid email or password')
-        }
-      } else {
-        toast.error(msg)
-      }
-    } finally {
-      setLoading(false)
-    }
+        } catch { toast.error('Invalid email or password') }
+      } else { toast.error(msg) }
+    } finally { setLoading(false) }
   }, [loading, email, password, navigate, returnTo])
 
   const handleSignUp = useCallback(async (e: React.FormEvent) => {
@@ -124,18 +115,24 @@ export default function AuthPage() {
 
   const handleOAuth = async (provider: 'google' | 'github') => {
     if (!isConfigured) { toast.error('Auth not configured'); return }
+    setLoading(true)
     try {
       if (provider === 'google') await signInWithGoogle()
       else await signInWithGitHub()
+      // signInWithOAuth triggers browser redirect — code stops here
     } catch (err: any) {
-      toast.error(err?.message?.includes('not enabled')
-        ? `${provider} not enabled in Supabase`
-        : `${provider} sign-in failed`)
-    }
+      console.error(`[Auth] ${provider} error:`, err)
+      const msg = err?.message || ''
+      if (msg.includes('not enabled')) {
+        toast.error(`${provider} is not enabled in Supabase Dashboard → Authentication → Providers → ${provider}`, { duration: 10000 })
+      } else {
+        toast.error(msg || `${provider} sign-in failed. Check Supabase dashboard.`, { duration: 8000 })
+      }
+    } finally { setLoading(false) }
   }
 
   const passwordReqs = mode === 'signup' ? [
-    { met: password.length >= 8, label: '8+ characters' },
+    { met: password.length >= 8, label: '8+ chars' },
     { met: /[A-Z]/.test(password), label: 'Uppercase' },
     { met: /[a-z]/.test(password), label: 'Lowercase' },
     { met: /[0-9]/.test(password), label: 'Number' },
@@ -143,21 +140,20 @@ export default function AuthPage() {
   ] : []
 
   if (authInitialized && user) return (
-    <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
-      <div className="w-5 h-5 border-2 border-white/10 border-t-white/40 rounded-full animate-spin" />
+    <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
+      <div className="w-5 h-5 border-2 border-white/10 border-t-violet-400/50 rounded-full animate-spin" />
     </div>
   )
 
   return (
-    <div className="min-h-screen bg-[#09090b] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center px-4">
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="w-full max-w-[360px]">
-        {/* Logo */}
         <Link to="/" className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-8 h-8 rounded-md bg-white text-[#09090b] flex items-center justify-center font-bold text-sm">P</div>
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center text-white font-bold text-sm">P</div>
           <span className="text-lg font-bold">Plurix</span>
         </Link>
 
-        <div className="bg-white/[0.025] border border-white/[0.06] rounded-xl p-6">
+        <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-6 backdrop-blur-sm">
           <AnimatePresence mode="wait">
             {mode === 'otp-verify' ? (
               <motion.div key="otp" initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 8 }} transition={{ duration: 0.2 }}>
@@ -165,8 +161,8 @@ export default function AuthPage() {
                   <ArrowLeft size={12} /> Back
                 </button>
                 <div className="text-center mb-5">
-                  <div className="w-10 h-10 rounded-xl bg-white/[0.04] flex items-center justify-center mx-auto mb-3">
-                    <KeyRound size={18} className="text-white/40" />
+                  <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center mx-auto mb-3">
+                    <KeyRound size={18} className="text-violet-400/60" />
                   </div>
                   <h2 className="text-lg font-bold mb-1">Enter code</h2>
                   <p className="text-white/30 text-[12px]">Sent to <span className="text-white/50">{email}</span></p>
@@ -178,11 +174,8 @@ export default function AuthPage() {
                   </button>
                 </form>
                 <div className="mt-3 text-center">
-                  {otpCountdown > 0 ? (
-                    <p className="text-white/20 text-[11px]">Resend in {otpCountdown}s</p>
-                  ) : (
-                    <button onClick={handleResendOtp} className="text-white/40 hover:text-white/60 text-[11px] font-medium">Resend code</button>
-                  )}
+                  {otpCountdown > 0 ? <p className="text-white/20 text-[11px]">Resend in {otpCountdown}s</p>
+                    : <button onClick={handleResendOtp} className="text-violet-400/60 hover:text-violet-400 text-[11px] font-medium">Resend code</button>}
                 </div>
               </motion.div>
             ) : (
@@ -264,11 +257,9 @@ export default function AuthPage() {
                 )}
 
                 <div className="mt-4 text-center text-[12px] text-white/30">
-                  {mode === 'signin' ? (
-                    <>No account? <button onClick={() => setMode('signup')} className="text-white/60 hover:text-white/80 font-medium">Sign up</button></>
-                  ) : (
-                    <>Have account? <button onClick={() => setMode('signin')} className="text-white/60 hover:text-white/80 font-medium">Sign in</button></>
-                  )}
+                  {mode === 'signin'
+                    ? <>No account? <button onClick={() => setMode('signup')} className="text-violet-400/70 hover:text-violet-400 font-medium">Sign up</button></>
+                    : <>Have account? <button onClick={() => setMode('signin')} className="text-violet-400/70 hover:text-violet-400 font-medium">Sign in</button></>}
                 </div>
               </motion.div>
             )}
