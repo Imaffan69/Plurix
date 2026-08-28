@@ -39,7 +39,7 @@ function createSafeClient(): SupabaseClient {
           },
         })
       }
-      if (prop === 'from') return () => ({ select: () => ({ data: [], error: null }), insert: noop, update: noop, delete: noop }) 
+      if (prop === 'from') return () => ({ select: () => ({ data: [], error: null }), insert: noop, update: noop, delete: noop })
       if (prop === 'storage') return { from: () => ({ upload: noop, getPublicUrl: () => ({ data: { publicUrl: '' } }) }) }
       return noop
     },
@@ -57,8 +57,21 @@ function assertConfigured(feature: string) {
   }
 }
 
+// === Helper: Update store from session ===
+function syncSessionToStore(session: Session | null) {
+  const s = useStore.getState()
+  s.setUser(session?.user ? supabaseUserToAppUser(session.user) : null)
+  s.setAuthLoading(false)
+  s.setAuthInitialized(true)
+}
+
 // === Auth Functions ===
 
+/**
+ * Sign up a new user with email + password.
+ * This creates the account but does NOT handle email verification.
+ * After signUp, the app should send an OTP code via sendOtp() for verification.
+ */
 export async function signUp(email: string, password: string, name: string) {
   assertConfigured('Sign up')
   const { data, error } = await supabase.auth.signUp({
@@ -66,13 +79,15 @@ export async function signUp(email: string, password: string, name: string) {
     password,
     options: {
       data: { name },
-      emailRedirectTo: `${window.location.origin}/chat`,
     },
   })
   if (error) throw error
   return data
 }
 
+/**
+ * Sign in with email + password (existing users with confirmed email).
+ */
 export async function signIn(email: string, password: string) {
   assertConfigured('Sign in')
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -80,22 +95,59 @@ export async function signIn(email: string, password: string) {
     password,
   })
   if (error) throw error
-  // Immediately update the store so the caller can navigate
   if (data?.user) {
-    const s = useStore.getState()
-    s.setUser(supabaseUserToAppUser(data.user))
-    s.setAuthLoading(false)
-    s.setAuthInitialized(true)
+    syncSessionToStore(data.session)
   }
   return data
 }
 
+/**
+ * Send a 6-digit OTP code to the user's email.
+ * Works for both existing users (sign-in) and new users (sign-up verification).
+ * Supabase sends a 6-digit code, NOT a magic link.
+ */
+export async function sendOtp(email: string, shouldCreateUser = false) {
+  assertConfigured('OTP')
+  const { data, error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser,
+    },
+  })
+  if (error) throw error
+  return data
+}
+
+/**
+ * Verify a 6-digit OTP code sent to the user's email.
+ * On success, signs the user in.
+ */
+export async function verifyOtp(email: string, token: string) {
+  assertConfigured('OTP verification')
+  const { data, error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: 'email',
+  })
+  if (error) throw error
+  if (data?.user) {
+    syncSessionToStore(data.session)
+  }
+  return data
+}
+
+/**
+ * OAuth sign-in (Google/GitHub).
+ * Supabase handles the full OAuth flow: redirect → provider → callback → session.
+ * The redirectTo must be whitelisted in Supabase Dashboard → Authentication → URL Configuration.
+ */
 export async function signInWithGoogle() {
   assertConfigured('Google sign-in')
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
       redirectTo: `${window.location.origin}/auth/callback`,
+      skipBrowserRedirect: false,
     },
   })
   if (error) throw error
@@ -108,6 +160,7 @@ export async function signInWithGitHub() {
     provider: 'github',
     options: {
       redirectTo: `${window.location.origin}/auth/callback`,
+      skipBrowserRedirect: false,
     },
   })
   if (error) throw error
@@ -120,7 +173,6 @@ export async function signOut() {
   } catch {
     // Ignore signOut errors — just clear local state
   }
-  // Always clear store state even if API call fails
   useStore.getState().setUser(null)
   useStore.getState().setAuthLoading(false)
   useStore.getState().setAuthInitialized(true)
@@ -136,36 +188,6 @@ export async function getSession(): Promise<Session | null> {
   if (!isConfigured) return null
   const { data: { session } } = await supabase.auth.getSession()
   return session
-}
-
-export async function sendOtp(email: string) {
-  assertConfigured('OTP')
-  const { data, error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      shouldCreateUser: false,
-    },
-  })
-  if (error) throw error
-  return data
-}
-
-export async function verifyOtp(email: string, token: string) {
-  assertConfigured('OTP verification')
-  const { data, error } = await supabase.auth.verifyOtp({
-    email,
-    token,
-    type: 'email',
-  })
-  if (error) throw error
-  // Immediately update the store
-  if (data?.user) {
-    const s = useStore.getState()
-    s.setUser(supabaseUserToAppUser(data.user))
-    s.setAuthLoading(false)
-    s.setAuthInitialized(true)
-  }
-  return data
 }
 
 export async function resetPassword(email: string) {
@@ -184,7 +206,7 @@ export function validatePassword(password: string): { valid: boolean; errors: st
   if (!/[A-Z]/.test(password)) errors.push('One uppercase letter')
   if (!/[a-z]/.test(password)) errors.push('One lowercase letter')
   if (!/[0-9]/.test(password)) errors.push('One number')
-  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\\/?]/.test(password)) errors.push('One special character')
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) errors.push('One special character')
   return { valid: errors.length === 0, errors }
 }
 
@@ -194,7 +216,7 @@ export function getPasswordStrength(password: string): { score: number; label: s
   if (password.length >= 12) score++
   if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score++
   if (/[0-9]/.test(password)) score++
-  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\\/?]/.test(password)) score++
+  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) score++
   if (password.length >= 16) score++
 
   if (score <= 2) return { score, label: 'Weak', color: '#ef4444' }
@@ -204,16 +226,13 @@ export function getPasswordStrength(password: string): { score: number; label: s
 }
 
 // === Centralized Auth Init ===
-// Call this once at app startup. Syncs Supabase session into the Zustand store.
 
 let authListenerUnsub: (() => void) | null = null
 
 export function initAuth() {
-  // Prevent double-init
   if (authListenerUnsub) return
 
   if (!isConfigured) {
-    // No Supabase — mark auth as initialized with no user
     const s = useStore.getState()
     s.setUser(null)
     s.setAuthLoading(false)
@@ -222,25 +241,17 @@ export function initAuth() {
     return
   }
 
-  // Fetch initial session
+  // Fetch initial session (also handles OAuth callback token exchange via detectSessionInUrl)
   supabase.auth.getSession().then(({ data: { session } }) => {
-    const s = useStore.getState()
-    s.setUser(session?.user ? supabaseUserToAppUser(session.user) : null)
-    s.setAuthLoading(false)
-    s.setAuthInitialized(true)
+    syncSessionToStore(session)
   }).catch(() => {
-    const s = useStore.getState()
-    s.setAuthLoading(false)
-    s.setAuthInitialized(true)
+    syncSessionToStore(null)
   })
 
-  // Listen for auth state changes
+  // Listen for auth state changes (handles OAuth callback, sign-in, sign-out)
   const { data: { subscription } } = supabase.auth.onAuthStateChange(
     (_event, session) => {
-      const s = useStore.getState()
-      s.setUser(session?.user ? supabaseUserToAppUser(session.user) : null)
-      s.setAuthLoading(false)
-      s.setAuthInitialized(true)
+      syncSessionToStore(session)
     }
   )
 
