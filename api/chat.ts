@@ -81,8 +81,8 @@ function extractImagePrompt(text: string): string {
 }
 
 // Truncate file content to avoid HTTP 413 (Vercel 4.5MB limit)
-const MAX_FILE_CHARS = 30000  // ~30KB per file
-const MAX_TOTAL_FILE_CHARS = 80000  // ~80KB total across all files
+const MAX_FILE_CHARS = 200000  // ~200KB per file
+const MAX_TOTAL_FILE_CHARS = 800000  // ~800KB total across all files
 
 function processFiles(files: any[]): string {
   if (!files || !Array.isArray(files) || files.length === 0) return ''
