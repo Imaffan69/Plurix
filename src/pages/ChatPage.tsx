@@ -58,16 +58,6 @@ function readFileAsText(file: File): Promise<string> {
   })
 }
 
-// Read file as data URL for images
-function readFileAsDataURL(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(reader.result as string)
-    reader.onerror = () => reject(new Error('Failed to read file'))
-    reader.readAsDataURL(file)
-  })
-}
-
 export default function ChatPage() {
   const { id: conversationId } = useParams()
   const navigate = useNavigate()
@@ -96,7 +86,6 @@ export default function ChatPage() {
         conversationIdRef.current = conversationId
       }
     } else {
-      // New conversation
       setMessages([])
       conversationIdRef.current = null
       setActiveConversation(null)
@@ -171,7 +160,6 @@ export default function ChatPage() {
 
     const convId = conversationIdRef.current!
 
-    // Add user message
     addMessage(convId, userMsg)
     setMessages(prev => [...prev, userMsg])
     setInput('')
@@ -179,7 +167,6 @@ export default function ChatPage() {
     setLoading(true)
 
     try {
-      // Build messages array for API (include file context)
       const apiMessages = [...messages, userMsg].map(m => ({
         role: m.role,
         content: m.content,
@@ -210,7 +197,7 @@ export default function ChatPage() {
         id: crypto.randomUUID(),
         role: 'assistant',
         content: data.text || 'No response.',
-        model: selectedModel,
+        model: data.model || selectedModel,
         created_at: new Date().toISOString(),
       }
 
@@ -222,6 +209,7 @@ export default function ChatPage() {
         id: crypto.randomUUID(),
         role: 'assistant',
         content: '⚠️ Something went wrong. Please try again.',
+        model: selectedModel,
         created_at: new Date().toISOString(),
       }
       addMessage(convId, errMsg)
@@ -240,6 +228,13 @@ export default function ChatPage() {
     conversationIdRef.current = null
     setActiveConversation(null)
     navigate('/chat', { replace: true })
+  }
+
+  // Get display name for a message's model
+  const getModelName = (modelId?: string) => {
+    if (!modelId) return currentModel?.name || 'AI'
+    const m = getModelById(modelId)
+    return m?.name || modelId
   }
 
   return (
@@ -303,7 +298,7 @@ export default function ChatPage() {
                     { icon: FileText, text: 'Analyze files', color: 'violet' },
                     { icon: ImageIcon, text: 'Generate image', color: 'blue' },
                   ].map(s => (
-                    <button key={s.text} onClick={() => { setInput(s.text); inputRef.current?.focus() }} className="glass-card p-3 text-left text-[12px] text-white/35 hover:text-white/60 transition-colors group">
+                    <button key={s.text} onClick={() => { setInput(s.text + ' '); inputRef.current?.focus() }} className="glass-card p-3 text-left text-[12px] text-white/35 hover:text-white/60 transition-colors group">
                       <s.icon size={14} className={`mb-1.5 ${s.color === 'violet' ? 'text-violet-400/40 group-hover:text-violet-400/60' : 'text-blue-400/40 group-hover:text-blue-400/60'} transition-colors`} />
                       <div>{s.text}</div>
                     </button>
@@ -319,7 +314,7 @@ export default function ChatPage() {
                     {msg.role === 'assistant' && (
                       <div className="flex items-center gap-1.5 mb-1 text-[11px] text-white/20">
                         <span className="text-violet-400/50">✦</span>
-                        <span>{currentModel?.name}</span>
+                        <span>{getModelName(msg.model)}</span>
                       </div>
                     )}
                     <MessageContent content={msg.content} role={msg.role} />

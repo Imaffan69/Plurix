@@ -1,19 +1,6 @@
 import { AIModelInfo } from '@/types'
 
 export const AI_MODELS: AIModelInfo[] = [
-  // ── Google Gemini ──
-  {
-    id: 'gemini-3.5-flash',
-    name: 'Gemini 3.5 Flash',
-    provider: 'Google',
-    description: 'Reliable, fast Gemini model',
-    icon: '✦',
-    color: '#4285f4',
-    speed: 'fast',
-    free: true,
-    maxTokens: 8192,
-  },
-
   // ── Groq models (fast, free) ──
   {
     id: 'gpt-oss-120b',
@@ -23,6 +10,61 @@ export const AI_MODELS: AIModelInfo[] = [
     icon: '⚡',
     color: '#10b981',
     speed: 'fast',
+    free: true,
+    maxTokens: 8192,
+  },
+  {
+    id: 'llama-4-maverick',
+    name: 'Llama 4 Maverick',
+    provider: 'Meta via Groq',
+    description: 'Latest Meta Llama, best quality',
+    icon: '🦙',
+    color: '#0668E1',
+    speed: 'fast',
+    free: true,
+    maxTokens: 8192,
+  },
+  {
+    id: 'llama-4-scout',
+    name: 'Llama 4 Scout',
+    provider: 'Meta via Groq',
+    description: 'Fast and efficient Llama 4',
+    icon: '🦙',
+    color: '#0668E1',
+    speed: 'ultra-fast',
+    free: true,
+    maxTokens: 8192,
+  },
+  {
+    id: 'llama-3.3-70b',
+    name: 'Llama 3.3 70B',
+    provider: 'Meta via Groq',
+    description: 'Versatile, strong all-rounder',
+    icon: '🦙',
+    color: '#0668E1',
+    speed: 'fast',
+    free: true,
+    maxTokens: 8192,
+  },
+  {
+    id: 'deepseek-r1',
+    name: 'DeepSeek R1',
+    provider: 'DeepSeek via Groq',
+    description: 'Advanced reasoning and analysis',
+    icon: '🔍',
+    color: '#0066FF',
+    speed: 'fast',
+    free: true,
+    maxTokens: 8192,
+  },
+  {
+    id: 'deepseek-v3',
+    name: 'DeepSeek V3',
+    provider: 'DeepSeek via Groq',
+    description: 'Fast, strong coding and math',
+    icon: '🔍',
+    color: '#0066FF',
+    speed: 'ultra-fast',
     free: true,
     maxTokens: 8192,
   },
@@ -69,6 +111,19 @@ export const AI_MODELS: AIModelInfo[] = [
     speed: 'ultra-fast',
     free: true,
     maxTokens: 4096,
+  },
+
+  // ── Google Gemini ──
+  {
+    id: 'gemini-3.5-flash',
+    name: 'Gemini 3.5 Flash',
+    provider: 'Google',
+    description: 'Reliable, fast Gemini model',
+    icon: '✦',
+    color: '#4285f4',
+    speed: 'fast',
+    free: true,
+    maxTokens: 8192,
   },
 
   // ── OpenRouter free models ──

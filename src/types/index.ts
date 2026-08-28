@@ -38,6 +38,11 @@ export interface Conversation {
 export type AIModel = 
   | 'gemini-3.5-flash'
   | 'gpt-oss-120b'
+  | 'llama-4-maverick'
+  | 'llama-4-scout'
+  | 'llama-3.3-70b'
+  | 'deepseek-r1'
+  | 'deepseek-v3'
   | 'qwen-3.8-27b'
   | 'qwen-3.6-27b'
   | 'gpt-oss-20b'
