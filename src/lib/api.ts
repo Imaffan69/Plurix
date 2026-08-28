@@ -33,18 +33,25 @@ export async function sendChatMessage(
   return response.json()
 }
 
-// Which provider each model uses
+// Which provider each model uses — tells frontend which env vars are needed
 export const MODEL_PROVIDERS: Partial<Record<AIModel, string>> = {
   // Groq
   'gpt-oss-120b': 'GROQ_API_KEY',
   'gpt-oss-20b': 'GROQ_API_KEY',
   'llama-3.3-70b': 'GROQ_API_KEY',
-  'llama-3.1-8b': 'GROQ_API_KEY',
   'qwen-3.8-27b': 'GROQ_API_KEY',
   'qwen-3.6-27b': 'GROQ_API_KEY',
   'minimax-m2.7': 'GROQ_API_KEY',
   // Gemini
   'gemini-3.5-flash': 'GOOGLE_API_KEY',
+  'gemini-3.7-flash': 'GOOGLE_API_KEY',
+  'gemini-2.5-flash': 'GOOGLE_API_KEY',
+  // Mistral
+  'mistral-medium-3.5': 'MISTRAL_API_KEY',
+  'codestral': 'MISTRAL_API_KEY',
+  // Hugging Face
+  'hf-llama-3.1-8b': 'HF_API_KEY',
+  'hf-qwen2.5-7b': 'HF_API_KEY',
   // OpenRouter
   'llama-4-maverick': 'OPENROUTER_API_KEY',
   'llama-4-scout': 'OPENROUTER_API_KEY',
@@ -55,12 +62,16 @@ export const MODEL_PROVIDERS: Partial<Record<AIModel, string>> = {
   'gemma-4-31b': 'OPENROUTER_API_KEY',
   'gemma-4-26b': 'OPENROUTER_API_KEY',
   'cohere-north-mini': 'OPENROUTER_API_KEY',
+  'inclusionai-ling': 'OPENROUTER_API_KEY',
+  'poolside-laguna': 'OPENROUTER_API_KEY',
   'openrouter-free': 'OPENROUTER_API_KEY',
 }
 
-// Only env vars needed
+// API keys needed — for display in settings
 export const REQUIRED_ENV_VARS = [
-  'GOOGLE_API_KEY',
   'GROQ_API_KEY',
+  'GOOGLE_API_KEY',
   'OPENROUTER_API_KEY',
+  'MISTRAL_API_KEY',
+  'HF_API_KEY',
 ]

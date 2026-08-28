@@ -37,14 +37,24 @@ export interface Conversation {
 }
 
 export type AIModel = 
+  // Groq
   | 'gpt-oss-120b'
   | 'gpt-oss-20b'
   | 'llama-3.3-70b'
-  | 'llama-3.1-8b'
   | 'qwen-3.8-27b'
   | 'qwen-3.6-27b'
   | 'minimax-m2.7'
+  // Gemini
   | 'gemini-3.5-flash'
+  | 'gemini-2.5-flash'
+  | 'gemini-3.7-flash'
+  // Mistral
+  | 'mistral-medium-3.5'
+  | 'codestral'
+  // Hugging Face
+  | 'hf-llama-3.1-8b'
+  | 'hf-qwen2.5-7b'
+  // OpenRouter
   | 'llama-4-maverick'
   | 'llama-4-scout'
   | 'nemotron-ultra-550b'
@@ -54,6 +64,8 @@ export type AIModel =
   | 'gemma-4-31b'
   | 'gemma-4-26b'
   | 'cohere-north-mini'
+  | 'inclusionai-ling'
+  | 'poolside-laguna'
   | 'openrouter-free'
 
 export interface AIModelInfo {

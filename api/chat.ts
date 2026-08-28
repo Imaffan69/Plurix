@@ -1,20 +1,26 @@
-// Vercel Serverless Function — routes chat to Groq + OpenRouter + Gemini
+// Vercel Serverless Function — routes chat to Groq + OpenRouter + Gemini + Mistral + HuggingFace
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 
-type Provider = 'groq' | 'openrouter' | 'gemini'
+type Provider = 'groq' | 'openrouter' | 'gemini' | 'mistral' | 'huggingface'
 
 const MODELS: Record<string, { provider: Provider; modelName: string }> = {
-  // ── Groq Production ──
+  // ── Groq ──
   'gpt-oss-120b':           { provider: 'groq', modelName: 'openai/gpt-oss-120b' },
   'gpt-oss-20b':            { provider: 'groq', modelName: 'openai/gpt-oss-20b' },
   'llama-3.3-70b':          { provider: 'groq', modelName: 'llama-3.3-70b-versatile' },
-  'llama-3.1-8b':           { provider: 'groq', modelName: 'llama-3.1-8b-instant' },
-  // ── Groq Preview ──
   'qwen-3.8-27b':           { provider: 'groq', modelName: 'qwen/qwen3.8-27b' },
   'qwen-3.6-27b':           { provider: 'groq', modelName: 'qwen/qwen3.6-27b' },
   'minimax-m2.7':           { provider: 'groq', modelName: 'minimaxai/minimax-m2.7' },
-  // ── Google Gemini ──
-  'gemini-3.5-flash':       { provider: 'gemini', modelName: 'gemini-2.0-flash' },
+  // ── Gemini ──
+  'gemini-3.5-flash':       { provider: 'gemini', modelName: 'gemini-3.5-flash' },
+  'gemini-3.7-flash':       { provider: 'gemini', modelName: 'gemini-3.7-flash' },
+  'gemini-2.5-flash':       { provider: 'gemini', modelName: 'gemini-2.5-flash-preview-05-20' },
+  // ── Mistral (free mode, no credit card) ──
+  'mistral-medium-3.5':     { provider: 'mistral', modelName: 'mistral-medium-latest' },
+  'codestral':              { provider: 'mistral', modelName: 'codestral-latest' },
+  // ── Hugging Face ──
+  'hf-llama-3.1-8b':        { provider: 'huggingface', modelName: 'meta-llama/Meta-Llama-3.1-8B-Instruct' },
+  'hf-qwen2.5-7b':          { provider: 'huggingface', modelName: 'Qwen/Qwen2.5-7B-Instruct' },
   // ── OpenRouter Free ──
   'llama-4-maverick':       { provider: 'openrouter', modelName: 'meta-llama/llama-4-maverick:free' },
   'llama-4-scout':          { provider: 'openrouter', modelName: 'meta-llama/llama-4-scout:free' },
@@ -25,6 +31,8 @@ const MODELS: Record<string, { provider: Provider; modelName: string }> = {
   'gemma-4-31b':            { provider: 'openrouter', modelName: 'google/gemma-4-31b-it:free' },
   'gemma-4-26b':            { provider: 'openrouter', modelName: 'google/gemma-4-26b-a4b-it:free' },
   'cohere-north-mini':      { provider: 'openrouter', modelName: 'cohere/north-mini-code:free' },
+  'inclusionai-ling':       { provider: 'openrouter', modelName: 'inclusionai/ling-3.0-flash:free' },
+  'poolside-laguna':        { provider: 'openrouter', modelName: 'poolside/laguna-s-2.1:free' },
   'openrouter-free':        { provider: 'openrouter', modelName: 'openrouter/free' },
 }
 
@@ -33,6 +41,8 @@ function getKey(provider: Provider): string {
     groq: 'GROQ_API_KEY',
     openrouter: 'OPENROUTER_API_KEY',
     gemini: 'GOOGLE_API_KEY',
+    mistral: 'MISTRAL_API_KEY',
+    huggingface: 'HF_API_KEY',
   }
   return process.env[map[provider]] || ''
 }
@@ -70,12 +80,58 @@ function extractImagePrompt(text: string): string {
     .trim() || text
 }
 
+// Truncate file content to avoid HTTP 413 (Vercel 4.5MB limit)
+const MAX_FILE_CHARS = 30000  // ~30KB per file
+const MAX_TOTAL_FILE_CHARS = 80000  // ~80KB total across all files
+
+function processFiles(files: any[]): string {
+  if (!files || !Array.isArray(files) || files.length === 0) return ''
+
+  const fileParts: string[] = []
+  let totalChars = 0
+
+  for (const f of files) {
+    const name = f.name || 'unknown-file'
+    const type = f.type || 'unknown'
+    const size = f.size || 0
+    const content = f.content || ''
+
+    if (content && content.trim()) {
+      const remaining = MAX_TOTAL_FILE_CHARS - totalChars
+      if (remaining <= 0) {
+        fileParts.push(`📄 File: ${name} (${type}) — skipped, too many files attached`)
+        continue
+      }
+
+      const maxChars = Math.min(MAX_FILE_CHARS, remaining)
+      const truncated = content.length > maxChars
+        ? content.substring(0, maxChars) + `\n\n... [truncated at ${maxChars} of ${content.length} chars]`
+        : content
+      totalChars += truncated.length
+
+      fileParts.push(`📄 File: ${name} (${type}, ${Math.round(size / 1024)}KB)\n\`\`\`\n${truncated}\n\`\`\``)
+    } else {
+      fileParts.push(`📄 File: ${name} (${type}, ${Math.round(size / 1024)}KB) — binary file, not readable as text`)
+    }
+  }
+
+  return fileParts.join('\n\n')
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
+
+  // Vercel body size limit check — catch early before parsing
+  const bodySize = JSON.stringify(req.body || {}).length
+  if (bodySize > 4 * 1024 * 1024) {  // 4MB safety margin
+    return res.status(413).json({
+      error: 'Request too large. Files exceed the 4MB limit. Please use smaller files or reduce the number of attachments.',
+    })
+  }
 
   const { messages, model, temperature = 0.7, files } = req.body || {}
 
@@ -102,57 +158,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const config = MODELS[model]
   const apiKey = getKey(config.provider)
   if (!apiKey)
-    return res.status(503).json({ error: `${config.provider.toUpperCase()}_API_KEY not configured.` })
+    return res.status(503).json({ error: `${config.provider.toUpperCase()}_API_KEY not configured. Get free keys from the provider's website.` })
 
-  // Build file context — read files and format them for the AI
+  // Process files safely (truncated to avoid 413)
+  const fileContext = processFiles(files)
   let processedMessages = [...messages]
-  if (files && Array.isArray(files) && files.length > 0) {
-    const fileParts: string[] = []
-    for (const f of files) {
-      const name = f.name || 'unknown-file'
-      const type = f.type || 'unknown'
-      const size = f.size || 0
-      const content = f.content || ''
 
-      if (content && content.trim()) {
-        // Truncate very large files to avoid context overflow
-        const maxChars = 50000
-        const truncated = content.length > maxChars
-          ? content.substring(0, maxChars) + `\n\n... [truncated, ${content.length} total chars]`
-          : content
-        fileParts.push(`📄 File: ${name} (${type}, ${Math.round(size / 1024)}KB)\n\`\`\`\n${truncated}\n\`\`\``)
-      } else {
-        fileParts.push(`📄 File: ${name} (${type}, ${Math.round(size / 1024)}KB) — binary file, content not readable as text`)
+  if (fileContext) {
+    const lastUserIdx = processedMessages.findLastIndex((m: any) => m.role === 'user')
+    if (lastUserIdx >= 0) {
+      processedMessages[lastUserIdx] = {
+        ...processedMessages[lastUserIdx],
+        content: `The user has attached ${files.length} file(s):\n\n${fileContext}\n\n---\n\nUser's message: ${processedMessages[lastUserIdx].content}`,
       }
     }
 
-    if (fileParts.length > 0) {
-      const fileContext = fileParts.join('\n\n')
-
-      // Find the last user message and prepend file context
-      const lastUserIdx = processedMessages.findLastIndex((m: any) => m.role === 'user')
-      if (lastUserIdx >= 0) {
-        const originalContent = processedMessages[lastUserIdx].content
-        processedMessages[lastUserIdx] = {
-          ...processedMessages[lastUserIdx],
-          content: `The user has attached ${files.length} file(s) for you to analyze:\n\n${fileContext}\n\n---\n\nUser's message: ${originalContent}`,
-        }
-      } else {
-        // No user message yet — add one with the files
-        processedMessages.push({
-          role: 'user',
-          content: `Please analyze these attached files:\n\n${fileContext}`,
-        })
-      }
-
-      // Add a system instruction to ensure the AI reads the files
-      const hasSystem = processedMessages.some((m: any) => m.role === 'system')
-      if (!hasSystem) {
-        processedMessages.unshift({
-          role: 'system',
-          content: 'The user has attached files. Read and analyze them carefully. Reference specific content from the files in your response.',
-        })
-      }
+    // Add system instruction for file analysis
+    const hasSystem = processedMessages.some((m: any) => m.role === 'system')
+    if (!hasSystem) {
+      processedMessages.unshift({
+        role: 'system',
+        content: 'The user has attached files. Read and analyze them carefully. Reference specific content from the files in your response.',
+      })
     }
   }
 
@@ -187,7 +214,52 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const data = await apiRes.json()
       responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
 
+    } else if (config.provider === 'mistral') {
+      // Mistral uses OpenAI-compatible API
+      const apiRes = await fetch('https://api.mistral.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: config.modelName,
+          messages: processedMessages,
+          temperature,
+          max_tokens: 4096,
+        }),
+      })
+      const data = await apiRes.json()
+      if (!apiRes.ok) {
+        const errMsg = data?.error?.message || data?.error || JSON.stringify(data).substring(0, 200)
+        throw new Error(`Mistral error ${apiRes.status}: ${errMsg}`)
+      }
+      responseText = data.choices?.[0]?.message?.content || ''
+
+    } else if (config.provider === 'huggingface') {
+      // Hugging Face router — OpenAI-compatible
+      const apiRes = await fetch('https://router.huggingface.co/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: config.modelName,
+          messages: processedMessages,
+          temperature,
+          max_tokens: 4096,
+        }),
+      })
+      const data = await apiRes.json()
+      if (!apiRes.ok) {
+        const errMsg = data?.error?.message || data?.error || JSON.stringify(data).substring(0, 200)
+        throw new Error(`HuggingFace error ${apiRes.status}: ${errMsg}`)
+      }
+      responseText = data.choices?.[0]?.message?.content || ''
+
     } else {
+      // Groq or OpenRouter — both OpenAI-compatible
       const endpoint = config.provider === 'groq'
         ? 'https://api.groq.com/openai/v1/chat/completions'
         : 'https://openrouter.ai/api/v1/chat/completions'
@@ -208,12 +280,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
 
       const data = await apiRes.json()
-
       if (!apiRes.ok) {
         const errMsg = data?.error?.message || data?.error || JSON.stringify(data).substring(0, 200)
         throw new Error(`${config.provider} error ${apiRes.status}: ${errMsg}`)
       }
-
       responseText = data.choices?.[0]?.message?.content || ''
     }
 

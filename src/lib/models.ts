@@ -1,7 +1,7 @@
 import { AIModelInfo } from '@/types'
 
 export const AI_MODELS: AIModelInfo[] = [
-  // ── Groq Production (fast, reliable) ──
+  // ── Groq (fast, free, no credit card) ──
   {
     id: 'gpt-oss-120b',
     name: 'GPT-OSS 120B',
@@ -36,19 +36,6 @@ export const AI_MODELS: AIModelInfo[] = [
     maxTokens: 32768,
   },
   {
-    id: 'llama-3.1-8b',
-    name: 'Llama 3.1 8B',
-    provider: 'Meta via Groq',
-    description: 'Fastest Meta model, 131K context',
-    icon: '🦙',
-    color: '#0668E1',
-    speed: 'ultra-fast',
-    free: true,
-    maxTokens: 131072,
-  },
-
-  // ── Groq Preview (newer, may be less stable) ──
-  {
     id: 'qwen-3.8-27b',
     name: 'Qwen 3.8 27B',
     provider: 'Alibaba via Groq',
@@ -82,17 +69,87 @@ export const AI_MODELS: AIModelInfo[] = [
     maxTokens: 131072,
   },
 
-  // ── Google Gemini ──
+  // ── Google Gemini (free, no credit card) ──
   {
     id: 'gemini-3.5-flash',
-    name: 'Gemini 2.0 Flash',
+    name: 'Gemini 3.5 Flash',
     provider: 'Google',
-    description: 'Reliable, fast Gemini model',
+    description: 'Latest fast Gemini, 1M context',
     icon: '✦',
     color: '#4285f4',
     speed: 'fast',
     free: true,
-    maxTokens: 8192,
+    maxTokens: 65536,
+  },
+  {
+    id: 'gemini-3.7-flash',
+    name: 'Gemini 3.7 Flash',
+    provider: 'Google',
+    description: 'Newest Gemini, multimodal',
+    icon: '✦',
+    color: '#4285f4',
+    speed: 'fast',
+    free: true,
+    maxTokens: 65536,
+  },
+  {
+    id: 'gemini-2.5-flash',
+    name: 'Gemini 2.5 Flash',
+    provider: 'Google',
+    description: 'Reasoning model, 1M context',
+    icon: '✦',
+    color: '#4285f4',
+    speed: 'fast',
+    free: true,
+    maxTokens: 65536,
+  },
+
+  // ── Mistral AI (free mode, no credit card, $10/mo credits) ──
+  {
+    id: 'mistral-medium-3.5',
+    name: 'Mistral Medium 3.5',
+    provider: 'Mistral AI',
+    description: '128B, text + code + vision',
+    icon: '🌀',
+    color: '#ff7000',
+    speed: 'fast',
+    free: true,
+    maxTokens: 262144,
+  },
+  {
+    id: 'codestral',
+    name: 'Codestral',
+    provider: 'Mistral AI',
+    description: 'Specialized coding model, 128K ctx',
+    icon: '💻',
+    color: '#ff7000',
+    speed: 'fast',
+    free: true,
+    maxTokens: 131072,
+  },
+
+  // ── Hugging Face (free $0.10/mo credits, OpenAI-compatible) ──
+  {
+    id: 'hf-llama-3.1-8b',
+    name: 'Llama 3.1 8B (HF)',
+    provider: 'Hugging Face',
+    description: 'Fast, via HF Inference API',
+    icon: '🤗',
+    color: '#ffd21e',
+    speed: 'ultra-fast',
+    free: true,
+    maxTokens: 4096,
+  },
+  {
+    id: 'hf-qwen2.5-7b',
+    name: 'Qwen2.5 7B (HF)',
+    provider: 'Hugging Face',
+    description: 'Versatile, via HF Inference API',
+    icon: '🤗',
+    color: '#ffd21e',
+    speed: 'ultra-fast',
+    free: true,
+    maxTokens: 4096,
   },
 
   // ── OpenRouter Free ──
@@ -133,7 +190,7 @@ export const AI_MODELS: AIModelInfo[] = [
     id: 'nemotron-3.5-lightning',
     name: 'Nemotron 3.5 Lightning',
     provider: 'NVIDIA via OpenRouter',
-    description: 'Ultra-fast, long context',
+    description: 'Ultra-fast, 1M context',
     icon: '⚡',
     color: '#76b900',
     speed: 'ultra-fast',
@@ -166,7 +223,7 @@ export const AI_MODELS: AIModelInfo[] = [
     id: 'gemma-4-31b',
     name: 'Gemma 4 31B',
     provider: 'Google via OpenRouter',
-    description: 'Google open-source, strong all-rounder',
+    description: 'Google open-source, vision capable',
     icon: '✦',
     color: '#4285f4',
     speed: 'fast',
@@ -177,7 +234,7 @@ export const AI_MODELS: AIModelInfo[] = [
     id: 'gemma-4-26b',
     name: 'Gemma 4 26B',
     provider: 'Google via OpenRouter',
-    description: 'Compact Google model, efficient',
+    description: 'Compact Google model, vision capable',
     icon: '✦',
     color: '#4285f4',
     speed: 'ultra-fast',
@@ -192,6 +249,28 @@ export const AI_MODELS: AIModelInfo[] = [
     icon: '💻',
     color: '#39d353',
     speed: 'ultra-fast',
+    free: true,
+    maxTokens: 4096,
+  },
+  {
+    id: 'inclusionai-ling',
+    name: 'Ling 3.0 Flash',
+    provider: 'Inclusion AI via OpenRouter',
+    description: '262K context, fast multilingual',
+    icon: '💡',
+    color: '#f59e0b',
+    speed: 'fast',
+    free: true,
+    maxTokens: 4096,
+  },
+  {
+    id: 'poolside-laguna',
+    name: 'Laguna S 2.1',
+    provider: 'Poolside via OpenRouter',
+    description: 'Code-specialized, 262K context',
+    icon: '🌊',
+    color: '#06b6d4',
+    speed: 'fast',
     free: true,
     maxTokens: 4096,
   },
