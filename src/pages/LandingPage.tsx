@@ -8,54 +8,47 @@ import {
 
 const models = [
   { name: 'Gemini 3.7 Flash', provider: 'Google' },
-  { name: 'Gemini 3.6 Flash', provider: 'Google' },
   { name: 'Nemotron Ultra 550B', provider: 'NVIDIA' },
   { name: 'Qwen 3.8 27B', provider: 'Alibaba' },
   { name: 'GPT-OSS 120B', provider: 'OpenAI' },
   { name: 'Gemma 4 31B', provider: 'Google' },
   { name: 'MiniMax M3', provider: 'MiniMax' },
-  { name: 'GLM 5.2', provider: 'Z.ai' },
 ]
 
 const features = [
-  { icon: Brain, title: '10+ AI Models', desc: 'Switch between GPT, Claude, Gemini, Llama, and more in one place.' },
-  { icon: Zap, title: 'Instant Responses', desc: 'Ultra-fast inference via Groq and optimized APIs. No waiting.' },
-  { icon: Shield, title: 'Private & Secure', desc: 'Your conversations stay yours. No data selling, ever.' },
-  { icon: Code, title: 'Code Playground', desc: 'Write and run code directly in the chat. Multiple languages.' },
-  { icon: Image, title: 'Image Generation', desc: 'Create images with DALL-E, Stable Diffusion, and Flux.' },
-  { icon: Globe, title: 'Web Search', desc: 'Real-time web search with cited sources. Always current.' },
-  { icon: MessageSquare, title: 'File Analysis', desc: 'Upload PDFs, images, and docs. Plurix reads and analyzes them.' },
-  { icon: Search, title: 'Smart Reasoning', desc: 'Chain-of-thought prompting for complex problems.' },
+  { icon: Brain, title: '15+ AI Models', desc: 'Switch between Gemini, Nemotron, Qwen, GPT-OSS, and more.' },
+  { icon: Zap, title: 'Instant', desc: 'Ultra-fast inference. No waiting, no queues.' },
+  { icon: Shield, title: 'Private', desc: 'Your conversations stay yours. No data selling.' },
+  { icon: Code, title: 'Code', desc: 'Write and run code. Multiple languages, syntax highlighting.' },
+  { icon: Image, title: 'Image Gen', desc: 'Generate images with Pollination AI. Free, unlimited.' },
+  { icon: Globe, title: 'Web Search', desc: 'Real-time search with cited sources.' },
+  { icon: MessageSquare, title: 'Files', desc: 'Upload PDFs, images, docs. AI reads and analyzes them.' },
+  { icon: Search, title: 'Reasoning', desc: 'Chain-of-thought for complex problems.' },
 ]
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden">
-      {/* Background */}
+    <div className="min-h-screen bg-[#09090b] text-white overflow-hidden">
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-gold-400/[0.02] rounded-full blur-[150px]" />
-        <div className="absolute inset-0 dot-grid opacity-40" />
+        <div className="absolute inset-0 dot-grid opacity-30" />
       </div>
 
       {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 px-5 py-3">
+      <nav className="fixed top-0 left-0 right-0 z-50 px-5 py-3 backdrop-blur-md bg-[#09090b]/80 border-b border-white/[0.04]">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-[9px] bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center text-black font-bold text-sm">
-              P
-            </div>
-            <span className="text-lg font-bold tracking-tight">Plurix</span>
+          <Link to="/" className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-md bg-white text-[#09090b] flex items-center justify-center font-bold text-[11px]">P</div>
+            <span className="font-semibold text-[15px]">Plurix</span>
           </Link>
-          <div className="hidden md:flex items-center gap-7 text-[13px] text-white/40">
+          <div className="hidden md:flex items-center gap-6 text-[13px] text-white/40">
             <a href="#features" className="hover:text-white/80 transition-colors">Features</a>
             <a href="#models" className="hover:text-white/80 transition-colors">Models</a>
-            <a href="#security" className="hover:text-white/80 transition-colors">Security</a>
             <Link to="/terms" className="hover:text-white/80 transition-colors">Terms</Link>
           </div>
           <div className="flex items-center gap-2">
             <Link to="/auth" className="btn-ghost text-[13px]">Sign In</Link>
             <Link to="/auth" className="btn-primary text-[13px]">
-              Get Started <ArrowRight size={14} />
+              Get Started <ArrowRight size={13} />
             </Link>
           </div>
         </div>
@@ -64,40 +57,33 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="relative pt-28 pb-16 px-5">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass mb-7 text-[12px] text-white/50">
-            <div className="w-1.5 h-1.5 rounded-full bg-gold-400 animate-pulse" />
-            One AI. Every Model. Zero Cost.
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.06] mb-6 text-[12px] text-white/40">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            One AI. Every Model. Free.
           </div>
 
-          <h1 className="text-[3.2rem] sm:text-[4rem] md:text-[5rem] font-black leading-[0.92] tracking-[-0.03em] mb-5">
+          <h1 className="text-[2.8rem] sm:text-[3.5rem] md:text-[4.5rem] font-black leading-[0.92] tracking-[-0.03em] mb-5">
             <span className="block text-white/90">The last AI</span>
-            <span className="block text-gold-gradient">assistant you need.</span>
+            <span className="block text-white/40">assistant you need.</span>
           </h1>
 
-          <p className="text-[15px] md:text-base text-white/35 max-w-lg mx-auto mb-8 leading-relaxed">
-            Chat with Gemini, Nemotron 550B, Qwen 3.8, GPT-OSS 120B, Gemma 4, and more —
-            all free, all fast, all from one interface.
+          <p className="text-[15px] text-white/30 max-w-lg mx-auto mb-7 leading-relaxed">
+            Chat with Gemini, Nemotron 550B, Qwen 3.8, GPT-OSS 120B — all free, all fast, one interface.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link to="/auth" className="btn-primary text-[14px] px-7 py-2.5 rounded-xl">
-              Start Chatting Free <ArrowRight size={15} />
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5">
+            <Link to="/auth" className="btn-primary text-[13px] px-6 py-2">
+              Start Free <ArrowRight size={14} />
             </Link>
-            <a href="#features" className="btn-secondary text-[14px] px-7 py-2.5 rounded-xl">
-              See What's Inside <ChevronRight size={15} />
+            <a href="#features" className="btn-secondary text-[13px] px-6 py-2">
+              See Features <ChevronRight size={14} />
             </a>
           </div>
 
-          {/* Model tags */}
-          <div className="mt-14 flex flex-wrap justify-center gap-2">
+          <div className="mt-12 flex flex-wrap justify-center gap-2">
             {models.map((m) => (
-              <div
-                key={m.name}
-                className="glass px-3.5 py-2 flex items-center gap-2 text-[12px] rounded-full"
-              >
-                <span className="text-white/50">{m.name}</span>
-                <span className="text-white/20">·</span>
-                <span className="text-white/25">{m.provider}</span>
+              <div key={m.name} className="px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-[11px] text-white/30">
+                {m.name} <span className="text-white/15">· {m.provider}</span>
               </div>
             ))}
           </div>
@@ -105,28 +91,20 @@ export default function LandingPage() {
       </section>
 
       {/* Features */}
-      <section id="features" className="py-20 px-5">
+      <section id="features" className="py-16 px-5">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold mb-3 tracking-tight">
-              Everything you need. <span className="text-gold-gradient">Nothing you don't.</span>
-            </h2>
-            <p className="text-white/35 text-[15px] max-w-md mx-auto">
-              Built for power users who want the best AI tools without the bloat.
-            </p>
+          <div className="text-center mb-12">
+            <h2 className="text-2xl md:text-3xl font-bold mb-2">Everything you need.</h2>
+            <p className="text-white/30 text-[14px]">Nothing you don't.</p>
           </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-2.5">
             {features.map((f) => (
-              <div
-                key={f.title}
-                className="glass-card p-5 group"
-              >
-                <div className="w-10 h-10 rounded-xl bg-gold-400/[0.06] flex items-center justify-center mb-3 group-hover:bg-gold-400/[0.1] transition-colors">
-                  <f.icon size={18} className="text-gold-400/70" />
+              <div key={f.title} className="glass-card p-4 group">
+                <div className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center mb-2.5 group-hover:bg-white/[0.06] transition-colors">
+                  <f.icon size={16} className="text-white/30" />
                 </div>
-                <h3 className="font-semibold text-[14px] mb-1">{f.title}</h3>
-                <p className="text-white/30 text-[13px] leading-relaxed">{f.desc}</p>
+                <h3 className="font-semibold text-[13px] mb-1">{f.title}</h3>
+                <p className="text-white/25 text-[12px] leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -134,36 +112,26 @@ export default function LandingPage() {
       </section>
 
       {/* Models */}
-      <section id="models" className="py-20 px-5">
+      <section id="models" className="py-16 px-5">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold mb-3 tracking-tight">
-              Pick any model. <span className="text-gold-gradient">They're all free.</span>
-            </h2>
-            <p className="text-white/35 text-[15px] max-w-md mx-auto">
-              No credits. No limits. Just pick a model and start talking.
-            </p>
+          <div className="text-center mb-12">
+            <h2 className="text-2xl md:text-3xl font-bold mb-2">Pick any model.</h2>
+            <p className="text-white/30 text-[14px]">They're all free.</p>
           </div>
-
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid sm:grid-cols-2 gap-2.5">
             {models.map((m) => (
-              <div
-                key={m.name}
-                className="glass-card p-4 flex items-center gap-3.5 group"
-              >
-                <div className="w-10 h-10 rounded-xl bg-white/[0.04] flex items-center justify-center shrink-0 group-hover:bg-white/[0.07] transition-colors">
-                  <Brain size={16} className="text-white/40" />
+              <div key={m.name} className="glass-card p-3.5 flex items-center gap-3 group">
+                <div className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center shrink-0">
+                  <Brain size={14} className="text-white/30" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-[13px]">{m.name}</h3>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-gold-400/10 text-gold-400 font-semibold uppercase tracking-wider">
-                      Free
-                    </span>
+                    <h3 className="font-semibold text-[12px]">{m.name}</h3>
+                    <span className="text-[8px] px-1 py-0.5 rounded bg-white/[0.06] text-white/30 font-medium uppercase">Free</span>
                   </div>
-                  <p className="text-white/25 text-[12px] mt-0.5">{m.provider}</p>
+                  <p className="text-white/20 text-[11px] mt-0.5">{m.provider}</p>
                 </div>
-                <ArrowUpRight size={14} className="text-white/10 group-hover:text-white/30 transition-colors shrink-0" />
+                <ArrowUpRight size={12} className="text-white/10 group-hover:text-white/30 transition-colors shrink-0" />
               </div>
             ))}
           </div>
@@ -171,25 +139,22 @@ export default function LandingPage() {
       </section>
 
       {/* Security */}
-      <section id="security" className="py-20 px-5">
-        <div className="max-w-5xl mx-auto">
-          <div className="glass-card p-10 text-center border-glow">
-            <div className="w-14 h-14 rounded-2xl bg-gold-400/[0.06] flex items-center justify-center mx-auto mb-5">
-              <Lock size={24} className="text-gold-400/70" />
+      <section id="security" className="py-16 px-5">
+        <div className="max-w-3xl mx-auto">
+          <div className="glass-card p-8 text-center">
+            <div className="w-10 h-10 rounded-xl bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
+              <Lock size={18} className="text-white/30" />
             </div>
-            <h2 className="text-2xl md:text-3xl font-bold mb-3 tracking-tight">
-              Your data, <span className="text-gold-gradient">your business.</span>
-            </h2>
-            <p className="text-white/35 text-[14px] max-w-lg mx-auto mb-8 leading-relaxed">
-              We don't sell your data. We don't train on your prompts. We don't share your information.
-              Your conversations are encrypted and stored securely.
+            <h2 className="text-xl md:text-2xl font-bold mb-2">Your data, your business.</h2>
+            <p className="text-white/30 text-[13px] max-w-md mx-auto mb-6">
+              We don't sell your data. We don't train on your prompts. Encrypted and secure.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Link to="/auth" className="btn-primary text-[14px] px-7 py-2.5 rounded-xl">
-                Start Using Plurix <ArrowRight size={15} />
+            <div className="flex items-center justify-center gap-2.5">
+              <Link to="/auth" className="btn-primary text-[13px] px-5 py-2">
+                Start Free <ArrowRight size={14} />
               </Link>
-              <Link to="/privacy" className="btn-secondary text-[14px] px-7 py-2.5 rounded-xl">
-                Read Our Privacy Policy
+              <Link to="/privacy" className="btn-secondary text-[13px] px-5 py-2">
+                Privacy Policy
               </Link>
             </div>
           </div>
@@ -197,19 +162,16 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/[0.04] py-10 px-5">
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-5">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-[7px] bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center text-black font-bold text-[11px]">
-              P
-            </div>
-            <span className="font-semibold text-[14px]">Plurix</span>
-            <span className="text-white/20 text-[12px]">© 2026</span>
+      <footer className="border-t border-white/[0.04] py-8 px-5">
+        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-white text-[#09090b] flex items-center justify-center font-bold text-[10px]">P</div>
+            <span className="font-semibold text-[13px]">Plurix</span>
+            <span className="text-white/15 text-[11px]">© 2026</span>
           </div>
-          <div className="flex items-center gap-6 text-[12px] text-white/30">
-            <Link to="/terms" className="hover:text-white/60 transition-colors">Terms</Link>
-            <Link to="/privacy" className="hover:text-white/60 transition-colors">Privacy</Link>
-            <a href="mailto:hello@plurix.app" className="hover:text-white/60 transition-colors">Contact</a>
+          <div className="flex items-center gap-5 text-[11px] text-white/25">
+            <Link to="/terms" className="hover:text-white/50 transition-colors">Terms</Link>
+            <Link to="/privacy" className="hover:text-white/50 transition-colors">Privacy</Link>
           </div>
         </div>
       </footer>

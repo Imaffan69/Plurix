@@ -55,7 +55,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-[#09090b]">
       <div className="border-b border-white/[0.04] px-5 py-3 flex items-center gap-3">
         <Link to="/chat" className="p-1.5 rounded-lg hover:bg-white/[0.05] text-white/30 hover:text-white/60">
           <ChevronLeft size={16} />
@@ -92,7 +92,7 @@ export default function SettingsPage() {
                       <CheckCircle size={10} /> Verified
                     </span>
                   ) : (
-                    <button className="flex items-center gap-1 text-[10px] text-gold-400 hover:text-gold-300 transition-colors">
+                    <button className="flex items-center gap-1 text-[10px] text-white/50 hover:text-white/70 transition-colors">
                       <Mail size={10} /> Verify
                     </button>
                   )}
@@ -113,7 +113,7 @@ export default function SettingsPage() {
                 <div className="text-[13px] font-medium">Dark Mode</div>
                 <div className="text-[11px] text-white/25">Always-on dark theme</div>
               </div>
-              <button onClick={toggleTheme} className={`w-10 h-[22px] rounded-full transition-colors relative ${theme === 'dark' ? 'bg-gold-400' : 'bg-white/15'}`}>
+              <button onClick={toggleTheme} className={`w-10 h-[22px] rounded-full transition-colors relative ${theme === 'dark' ? 'bg-white' : 'bg-white/15'}`}>
                 <div className={`w-[18px] h-[18px] rounded-full bg-black absolute top-[2px] transition-transform ${theme === 'dark' ? 'translate-x-[20px]' : 'translate-x-[2px]'}`} />
               </button>
             </div>
@@ -122,7 +122,7 @@ export default function SettingsPage() {
                 <div className="text-[13px] font-medium">Notifications</div>
                 <div className="text-[11px] text-white/25">Email notifications</div>
               </div>
-              <button onClick={() => setNotifications(!notifications)} className={`w-10 h-[22px] rounded-full transition-colors relative ${notifications ? 'bg-gold-400' : 'bg-white/15'}`}>
+              <button onClick={() => setNotifications(!notifications)} className={`w-10 h-[22px] rounded-full transition-colors relative ${notifications ? 'bg-white' : 'bg-white/15'}`}>
                 <div className={`w-[18px] h-[18px] rounded-full bg-black absolute top-[2px] transition-transform ${notifications ? 'translate-x-[20px]' : 'translate-x-[2px]'}`} />
               </button>
             </div>

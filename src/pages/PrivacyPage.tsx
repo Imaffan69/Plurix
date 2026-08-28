@@ -14,7 +14,7 @@ export default function PrivacyPage() {
         <p className="text-white/25 text-[11px] mb-8 uppercase tracking-wider font-medium">Last updated: August 27, 2026</p>
 
         <div className="glass-card p-5 mb-8 flex items-start gap-3">
-          <Shield size={18} className="text-gold-400/60 shrink-0 mt-0.5" />
+          <Shield size={18} className="text-white/40 shrink-0 mt-0.5" />
           <div>
             <h3 className="text-[13px] font-bold mb-1">Privacy-First</h3>
             <p className="text-[12px] text-white/35 leading-relaxed">
@@ -91,7 +91,7 @@ export default function PrivacyPage() {
             <h2 className="text-[15px] font-bold mb-2">8. Your Rights</h2>
             <p className="text-white/45 text-[13px] leading-relaxed">
               You have the right to access, export, and delete your personal data. Contact us at{' '}
-              <a href="mailto:privacy@plurix.app" className="text-gold-400/70 hover:text-gold-400 transition-colors">privacy@plurix.app</a>.
+              <a href="mailto:privacy@plurix.app" className="text-white/70/70 hover:text-white/70 transition-colors">privacy@plurix.app</a>.
             </p>
           </section>
 

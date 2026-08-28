@@ -1,11 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback, memo } from 'react'
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import {
-  Send, Settings, ChevronDown,
-  Copy, Globe, Paperclip, Loader2,
-  PanelLeftClose, PanelLeft, Brain, Code, Image as ImageIcon, Search,
-  Sparkles, Check, RotateCcw
+  Send, ChevronDown, Copy, Paperclip, Loader2,
+  PanelLeftClose, PanelLeft, Brain, Code, Search,
+  Check, X, Image as ImageIcon, FileText, Trash2
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import toast from 'react-hot-toast'
@@ -14,24 +12,22 @@ import { AI_MODELS, getModelById } from '@/lib/models'
 import { AIModel, Message } from '@/types'
 import Sidebar from '@/components/layout/Sidebar'
 
-// Lazy-load the heavy syntax highlighter only when needed
 const LazySyntaxHighlighter = React.lazy(() =>
   import('react-syntax-highlighter').then(mod => ({ default: mod.Prism }))
 )
 
 const MessageContent = memo(function MessageContent({ content, role }: { content: string; role: string }) {
   if (role !== 'assistant') {
-    return <p>{content}</p>
+    return <p className="whitespace-pre-wrap">{content}</p>
   }
-
   return (
     <ReactMarkdown
       components={{
         code({ className, children, ...props }) {
           const match = /language-(\w+)/.exec(className || '')
           return match ? (
-            <div className="relative my-2.5 rounded-xl overflow-hidden border border-white/[0.04]">
-              <div className="flex items-center justify-between px-3 py-1.5 bg-white/[0.03] text-[10px] text-white/30">
+            <div className="relative my-2 rounded-lg overflow-hidden border border-white/[0.06]">
+              <div className="flex items-center justify-between px-3 py-1 bg-white/[0.03] text-[10px] text-white/30">
                 <span>{match[1]}</span>
                 <button
                   onClick={() => { navigator.clipboard.writeText(String(children)); toast.success('Copied!') }}
@@ -41,7 +37,7 @@ const MessageContent = memo(function MessageContent({ content, role }: { content
                 </button>
               </div>
               <React.Suspense fallback={
-                <pre className="p-4 bg-black/30 text-[12px] font-mono text-white/50 overflow-x-auto">{String(children).replace(/\n$/, '')}</pre>
+                <pre className="p-3 bg-black/30 text-[12px] font-mono text-white/50 overflow-x-auto">{String(children).replace(/\n$/, '')}</pre>
               }>
                 <LazySyntaxHighlighter
                   language={match[1]}
@@ -53,7 +49,7 @@ const MessageContent = memo(function MessageContent({ content, role }: { content
               </React.Suspense>
             </div>
           ) : (
-            <code className="px-1 py-0.5 rounded bg-white/[0.08] text-gold-400/80 text-[12px] font-mono" {...props}>
+            <code className="px-1 py-0.5 rounded bg-white/[0.08] text-indigo-400/80 text-[12px] font-mono" {...props}>
               {children}
             </code>
           )
@@ -71,21 +67,50 @@ export default function ChatPage() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [modelDropdown, setModelDropdown] = useState(false)
-  const [webSearch, setWebSearch] = useState(false)
+  const [attachments, setAttachments] = useState<Array<{ name: string; type: string; size: number; preview?: string }>>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const currentModel = getModelById(selectedModel)
 
-  // Use requestAnimationFrame for smooth scroll
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    const newAttachments = files.map(f => ({
+      name: f.name,
+      type: f.type,
+      size: f.size,
+    }))
+
+    // Preview images
+    files.forEach((f, i) => {
+      if (f.type.startsWith('image/')) {
+        const reader = new FileReader()
+        reader.onload = (ev) => {
+          setAttachments(prev => {
+            const updated = [...prev]
+            if (updated[i]) updated[i] = { ...updated[i], preview: ev.target?.result as string }
+            return updated
+          })
+        }
+        reader.readAsDataURL(f)
+      }
+    })
+
+    setAttachments(prev => [...prev, ...newAttachments])
+    e.target.value = ''
+  }, [])
+
+  const removeAttachment = useCallback((index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index))
+  }, [])
+
   const handleSend = useCallback(async () => {
-    if (!input.trim() || loading) return
+    if ((!input.trim() && attachments.length === 0) || loading) return
 
     const userMsg: Message = {
       id: crypto.randomUUID(),
@@ -97,6 +122,7 @@ export default function ChatPage() {
 
     setMessages(prev => [...prev, userMsg])
     setInput('')
+    setAttachments([])
     setLoading(true)
 
     try {
@@ -110,11 +136,13 @@ export default function ChatPage() {
           })),
           model: selectedModel,
           temperature: 0.7,
-          webSearch,
         }),
       })
 
-      if (!res.ok) throw new Error('Failed to get response')
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.error || `HTTP ${res.status}`)
+      }
 
       const data = await res.json()
       const assistantMsg: Message = {
@@ -123,22 +151,20 @@ export default function ChatPage() {
         content: data.text || 'No response received.',
         model: selectedModel,
         created_at: new Date().toISOString(),
-        sources: data.sources,
       }
       setMessages(prev => [...prev, assistantMsg])
     } catch (err: any) {
       toast.error(err.message || 'Failed to get response')
-      const errMsg: Message = {
+      setMessages(prev => [...prev, {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: '⚠️ Sorry, I encountered an error. Please try again.',
+        content: '⚠️ Something went wrong. Please try again.',
         created_at: new Date().toISOString(),
-      }
-      setMessages(prev => [...prev, errMsg])
+      }])
     } finally {
       setLoading(false)
     }
-  }, [input, loading, messages, selectedModel, webSearch])
+  }, [input, loading, messages, selectedModel, attachments])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -148,78 +174,17 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex h-screen bg-black overflow-hidden">
+    <div className="flex h-screen bg-[#09090b] overflow-hidden">
       <Sidebar />
 
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Bar */}
-        <div className="h-[52px] border-b border-white/[0.04] flex items-center px-3 gap-2 shrink-0">
-          <button onClick={toggleSidebar} className="p-1.5 rounded-lg hover:bg-white/[0.05] text-white/30 hover:text-white/60 transition-colors">
-            {sidebarOpen ? <PanelLeftClose size={16} /> : <PanelLeft size={16} />}
+        {/* Top Bar - minimal */}
+        <div className="h-[44px] border-b border-white/[0.06] flex items-center px-3 gap-2 shrink-0">
+          <button onClick={toggleSidebar} className="p-1 rounded hover:bg-white/[0.06] text-white/30 hover:text-white/60 transition-colors">
+            {sidebarOpen ? <PanelLeftClose size={15} /> : <PanelLeft size={15} />}
           </button>
-
-          {/* Model Selector */}
-          <div className="relative">
-            <button
-              onClick={() => setModelDropdown(!modelDropdown)}
-              className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-white/[0.05] text-[13px] transition-colors"
-            >
-              <span className="text-white/60">{currentModel?.icon}</span>
-              <span className="font-medium text-white/70">{currentModel?.name || 'Select Model'}</span>
-              <ChevronDown size={12} className={`text-white/30 transition-transform ${modelDropdown ? 'rotate-180' : ''}`} />
-            </button>
-
-            {modelDropdown && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setModelDropdown(false)} />
-                <div className="absolute top-full left-0 mt-1.5 w-[300px] glass-elevated p-1.5 z-50 max-h-[360px] overflow-y-auto">
-                  <div className="px-2.5 py-1.5 text-[10px] font-semibold text-white/20 uppercase tracking-wider">
-                    Select a model
-                  </div>
-                  {AI_MODELS.map(model => (
-                    <button
-                      key={model.id}
-                      onClick={() => {
-                        setSelectedModel(model.id as AIModel)
-                        setModelDropdown(false)
-                      }}
-                      className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-colors ${
-                        selectedModel === model.id
-                          ? 'bg-white/[0.06] text-white'
-                          : 'hover:bg-white/[0.04] text-white/60'
-                      }`}
-                    >
-                      <span className="text-sm shrink-0">{model.icon}</span>
-                      <div className="min-w-0 flex-1">
-                        <div className="font-medium text-[12px]">{model.name}</div>
-                        <div className="text-[11px] text-white/25">{model.provider} · {model.speed}</div>
-                      </div>
-                      {model.free && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-gold-400/10 text-gold-400 font-semibold uppercase shrink-0">
-                          Free
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className="ml-auto flex items-center gap-1">
-            <button
-              onClick={() => setWebSearch(!webSearch)}
-              className={`p-1.5 rounded-lg transition-colors ${webSearch ? 'bg-gold-400/10 text-gold-400' : 'hover:bg-white/[0.05] text-white/30'}`}
-              title="Web Search"
-            >
-              <Globe size={16} />
-            </button>
-            <Link to="/tools" className="p-1.5 rounded-lg hover:bg-white/[0.05] text-white/30 hover:text-white/60 transition-colors" title="Tools">
-              <Code size={16} />
-            </Link>
-            <Link to="/settings" className="p-1.5 rounded-lg hover:bg-white/[0.05] text-white/30 hover:text-white/60 transition-colors" title="Settings">
-              <Settings size={16} />
-            </Link>
+          <div className="text-[12px] text-white/40 font-medium">
+            {currentModel?.name || 'Select Model'}
           </div>
         </div>
 
@@ -228,27 +193,26 @@ export default function ChatPage() {
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full px-5 text-center">
               <div className="max-w-md">
-                <div className="w-16 h-16 rounded-2xl bg-gold-400/[0.06] flex items-center justify-center mx-auto mb-5">
-                  <Brain size={28} className="text-gold-400/50" />
+                <div className="w-10 h-10 rounded-xl bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
+                  <Brain size={20} className="text-white/20" />
                 </div>
-                <h2 className="text-xl font-bold mb-1.5 tracking-tight">What can I help with?</h2>
-                <p className="text-white/30 text-[13px] mb-6">
-                  Powered by <span className="text-white/50 font-medium">{currentModel?.name}</span>.
-                  Ask me anything — code, research, writing, analysis.
+                <h2 className="text-lg font-semibold mb-1">What can I help with?</h2>
+                <p className="text-white/30 text-[13px] mb-5">
+                  Using <span className="text-white/50">{currentModel?.name}</span>
                 </p>
                 <div className="grid grid-cols-2 gap-2 max-w-sm mx-auto">
                   {[
-                    { icon: Code, text: 'Write Python code' },
-                    { icon: Search, text: 'Research a topic' },
-                    { icon: ImageIcon, text: 'Explain a concept' },
-                    { icon: Sparkles, text: 'Creative writing' },
+                    { icon: Code, text: 'Write code' },
+                    { icon: Search, text: 'Research' },
+                    { icon: FileText, text: 'Analyze data' },
+                    { icon: ImageIcon, text: 'Generate image' },
                   ].map(s => (
                     <button
                       key={s.text}
                       onClick={() => { setInput(s.text); inputRef.current?.focus() }}
-                      className="glass-card p-3 text-left text-[12px] text-white/40 hover:text-white/70 transition-colors"
+                      className="glass-card p-2.5 text-left text-[12px] text-white/40 hover:text-white/60 transition-colors"
                     >
-                      <s.icon size={14} className="mb-1.5 text-gold-400/50" />
+                      <s.icon size={13} className="mb-1 text-white/20" />
                       <div>{s.text}</div>
                     </button>
                   ))}
@@ -256,39 +220,22 @@ export default function ChatPage() {
               </div>
             </div>
           ) : (
-            <div className="max-w-3xl mx-auto py-5 px-4">
+            <div className="max-w-3xl mx-auto py-4 px-4">
               {messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`mb-5 ${msg.role === 'user' ? 'flex justify-end' : ''}`}
-                >
-                  <div className={`max-w-[85%] ${msg.role === 'user' ? 'bg-gold-400/[0.06] border border-gold-400/10 rounded-2xl rounded-br-md px-4 py-2.5' : ''}`}>
+                <div key={msg.id} className="mb-4">
+                  <div className={`text-[13px] leading-relaxed ${msg.role === 'user' ? 'text-white/80' : 'text-white/70'}`}>
                     {msg.role === 'assistant' && (
-                      <div className="flex items-center gap-1.5 mb-1.5 text-[11px] text-white/25">
-                        <span className="text-[12px]">{currentModel?.icon}</span>
+                      <div className="flex items-center gap-1.5 mb-1 text-[11px] text-white/20">
                         <span>{currentModel?.name}</span>
                       </div>
                     )}
-                    <div className={`text-[13px] leading-relaxed ${msg.role === 'user' ? 'text-white/80' : 'text-white/70'}`}>
-                      <MessageContent content={msg.content} role={msg.role} />
-                    </div>
-                    {/* Sources */}
-                    {msg.sources && msg.sources.length > 0 && (
-                      <div className="mt-3 pt-2 border-t border-white/[0.04]">
-                        <div className="text-[10px] text-white/20 uppercase tracking-wider mb-1.5 font-semibold">Sources</div>
-                        {msg.sources.map((src, i) => (
-                          <a key={i} href={src.url} target="_blank" rel="noopener noreferrer" className="block text-[11px] text-gold-400/60 hover:text-gold-400/80 truncate py-0.5">
-                            {src.title}
-                          </a>
-                        ))}
-                      </div>
-                    )}
+                    <MessageContent content={msg.content} role={msg.role} />
                   </div>
                 </div>
               ))}
               {loading && (
-                <div className="flex items-center gap-1.5 text-[12px] text-white/30">
-                  <Loader2 size={12} className="animate-spin" />
+                <div className="flex items-center gap-1.5 text-[12px] text-white/25">
+                  <Loader2 size={11} className="animate-spin" />
                   <span>{currentModel?.name} is thinking...</span>
                 </div>
               )}
@@ -297,38 +244,116 @@ export default function ChatPage() {
           )}
         </div>
 
-        {/* Input */}
-        <div className="border-t border-white/[0.04] p-3">
+        {/* Input Area - compact, model selector near input */}
+        <div className="border-t border-white/[0.06] p-3">
           <div className="max-w-3xl mx-auto">
-            <div className="glass rounded-2xl flex items-end gap-1.5 p-1.5">
-              <button className="p-1.5 rounded-lg hover:bg-white/[0.05] text-white/25 hover:text-white/50 transition-colors shrink-0">
-                <Paperclip size={16} />
+            {/* Attachments preview */}
+            {attachments.length > 0 && (
+              <div className="flex gap-2 mb-2 flex-wrap">
+                {attachments.map((a, i) => (
+                  <div key={i} className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] text-[11px] text-white/40">
+                    <FileText size={11} />
+                    <span className="truncate max-w-[120px]">{a.name}</span>
+                    <button onClick={() => removeAttachment(i)} className="text-white/20 hover:text-white/50">
+                      <X size={10} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Input box */}
+            <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl flex items-end gap-1 p-1">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="p-1.5 rounded-lg hover:bg-white/[0.06] text-white/25 hover:text-white/50 transition-colors shrink-0"
+                title="Attach file"
+              >
+                <Paperclip size={15} />
               </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                className="hidden"
+                onChange={handleFileSelect}
+                accept=".txt,.csv,.json,.pdf,.md,.ts,.tsx,.js,.jsx,.py,.html,.css,.xml,.yaml,.yml,.log,.png,.jpg,.jpeg,.gif,.webp"
+              />
               <textarea
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={`Message ${currentModel?.name || 'Plurix'}...`}
-                className="flex-1 bg-transparent resize-none outline-none text-[13px] text-white/80 placeholder:text-white/20 py-1.5 px-1 max-h-28 min-h-[32px]"
+                className="flex-1 bg-transparent resize-none outline-none text-[13px] text-white/80 placeholder:text-white/20 py-1.5 px-1 max-h-32 min-h-[28px]"
                 rows={1}
                 onInput={(e) => {
                   const t = e.target as HTMLTextAreaElement
                   t.style.height = 'auto'
-                  t.style.height = Math.min(t.scrollHeight, 112) + 'px'
+                  t.style.height = Math.min(t.scrollHeight, 128) + 'px'
                 }}
               />
               <button
                 onClick={handleSend}
-                disabled={!input.trim() || loading}
-                className="p-2 rounded-xl bg-gold-400 text-black disabled:opacity-20 disabled:cursor-not-allowed hover:bg-gold-300 transition-all shrink-0"
+                disabled={(!input.trim() && attachments.length === 0) || loading}
+                className="p-1.5 rounded-lg bg-white text-[#09090b] disabled:opacity-20 disabled:cursor-not-allowed hover:bg-white/90 transition-all shrink-0"
               >
-                {loading ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
+                {loading ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
               </button>
             </div>
-            <p className="text-center text-[10px] text-white/15 mt-1.5">
-              Plurix can make mistakes. Verify important information.
-            </p>
+
+            {/* Model selector - compact, below input */}
+            <div className="flex items-center justify-between mt-1.5 px-1">
+              <div className="relative">
+                <button
+                  onClick={() => setModelDropdown(!modelDropdown)}
+                  className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-white/[0.04] text-[11px] text-white/30 hover:text-white/50 transition-colors"
+                >
+                  <span>{currentModel?.icon}</span>
+                  <span>{currentModel?.name || 'Model'}</span>
+                  <ChevronDown size={10} className={`transition-transform ${modelDropdown ? 'rotate-180' : ''}`} />
+                </button>
+
+                {modelDropdown && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setModelDropdown(false)} />
+                    <div className="absolute bottom-full left-0 mb-2 w-[280px] glass-elevated p-1.5 z-50 max-h-[320px] overflow-y-auto">
+                      <div className="px-2.5 py-1 text-[10px] text-white/20 uppercase tracking-wider font-semibold">
+                        Models
+                      </div>
+                      {AI_MODELS.map(model => (
+                        <button
+                          key={model.id}
+                          onClick={() => {
+                            setSelectedModel(model.id as AIModel)
+                            setModelDropdown(false)
+                          }}
+                          className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left transition-colors ${
+                            selectedModel === model.id
+                              ? 'bg-white/[0.06] text-white'
+                              : 'hover:bg-white/[0.04] text-white/50'
+                          }`}
+                        >
+                          <span className="text-[12px] shrink-0">{model.icon}</span>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium text-[12px]">{model.name}</div>
+                            <div className="text-[10px] text-white/20">{model.provider}</div>
+                          </div>
+                          {model.free && (
+                            <span className="text-[8px] px-1 py-0.5 rounded bg-white/[0.06] text-white/30 font-medium uppercase shrink-0">
+                              Free
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className="text-[10px] text-white/15">
+                Plurix can make mistakes
+              </div>
+            </div>
           </div>
         </div>
       </div>

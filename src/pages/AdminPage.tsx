@@ -96,7 +96,7 @@ export default function AdminPage() {
           {stats.map((s) => (
             <div key={s.label} className="glass-card p-4">
               <div className="flex items-center justify-between mb-2.5">
-                <s.icon size={16} className="text-gold-400/50" />
+                <s.icon size={16} className="text-white/30" />
                 <span className="text-[10px] text-emerald-400/70 font-medium">{s.change}</span>
               </div>
               <div className="text-xl font-bold">{s.value}</div>
@@ -124,13 +124,13 @@ export default function AdminPage() {
           <div className="grid lg:grid-cols-2 gap-4">
             <div className="glass-card p-5">
               <h3 className="text-[13px] font-semibold mb-4 flex items-center gap-2 text-white/60">
-                <BarChart3 size={14} className="text-gold-400/50" /> Activity
+                <BarChart3 size={14} className="text-white/30" /> Activity
               </h3>
               <div className="h-40 flex items-end gap-1">
                 {[35, 52, 45, 67, 78, 56, 89, 92, 65, 78, 85, 95].map((h, i) => (
                   <div key={i} className="flex-1 flex flex-col items-center">
                     <div
-                      className="w-full rounded-t bg-gold-400/20 transition-all duration-300"
+                      className="w-full rounded-t bg-white/10 transition-all duration-300"
                       style={{ height: `${h}%` }}
                     />
                   </div>
@@ -143,7 +143,7 @@ export default function AdminPage() {
 
             <div className="glass-card p-5">
               <h3 className="text-[13px] font-semibold mb-4 flex items-center gap-2 text-white/60">
-                <Globe size={14} className="text-gold-400/50" /> Top IPs
+                <Globe size={14} className="text-white/30" /> Top IPs
               </h3>
               <div className="space-y-2">
                 {ips.slice(0, 5).map(ip => (
@@ -181,7 +181,7 @@ export default function AdminPage() {
               ).map(user => (
                 <div key={user.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.02] transition-colors">
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold ${
-                    user.role === 'admin' ? 'bg-gold-400/10 text-gold-400' :
+                    user.role === 'admin' ? 'bg-white/60 text-white/70' :
                     user.role === 'banned' ? 'bg-red-500/10 text-red-400/70' :
                     'bg-white/[0.04] text-white/40'
                   }`}>
@@ -190,7 +190,7 @@ export default function AdminPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="font-medium text-[12px]">{user.name}</span>
-                      {user.role === 'admin' && <span className="text-[9px] px-1.5 py-0.5 rounded bg-gold-400/10 text-gold-400 font-semibold">ADMIN</span>}
+                      {user.role === 'admin' && <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/60 text-white/70 font-semibold">ADMIN</span>}
                       {user.role === 'banned' && <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-500/10 text-red-400/70 font-semibold">BANNED</span>}
                     </div>
                     <div className="text-[11px] text-white/25">{user.email}</div>

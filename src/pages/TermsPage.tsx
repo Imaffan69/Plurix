@@ -61,7 +61,7 @@ export default function TermsPage() {
             <h2 className="text-[15px] font-bold mb-2">6. Privacy</h2>
             <p className="text-white/45 text-[13px] leading-relaxed">
               Your use of the Service is also governed by our{' '}
-              <Link to="/privacy" className="text-gold-400/70 hover:text-gold-400 transition-colors underline underline-offset-2">Privacy Policy</Link>.
+              <Link to="/privacy" className="text-white/70/70 hover:text-white/70 transition-colors underline underline-offset-2">Privacy Policy</Link>.
             </p>
           </section>
 
@@ -101,7 +101,7 @@ export default function TermsPage() {
             <h2 className="text-[15px] font-bold mb-2">11. Contact</h2>
             <p className="text-white/45 text-[13px] leading-relaxed">
               Questions? Email us at{' '}
-              <a href="mailto:legal@plurix.app" className="text-gold-400/70 hover:text-gold-400 transition-colors">legal@plurix.app</a>.
+              <a href="mailto:legal@plurix.app" className="text-white/70/70 hover:text-white/70 transition-colors">legal@plurix.app</a>.
             </p>
           </section>
         </div>

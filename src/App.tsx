@@ -23,7 +23,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (authLoading || !authInitialized) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-gold-400/20 border-t-gold-400 rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-white/10 border-t-white/40 rounded-full animate-spin" />
       </div>
     )
   }
@@ -106,7 +106,7 @@ function AuthCallback() {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <div className="w-6 h-6 border-2 border-gold-400/20 border-t-gold-400 rounded-full animate-spin mx-auto mb-3" />
+          <div className="w-6 h-6 border-2 border-white/10 border-t-white/40 rounded-full animate-spin mx-auto mb-3" />
           <p className="text-white/30 text-sm">Signing you in...</p>
         </div>
       </div>

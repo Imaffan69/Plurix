@@ -36,9 +36,9 @@ function CodePlayground() {
   return (
     <div className="glass-card overflow-hidden">
       <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/[0.04]">
-        <Terminal size={14} className="text-gold-400/60" />
+        <Terminal size={14} className="text-white/40" />
         <span className="text-[12px] font-medium">Code Playground</span>
-        <span className="text-[9px] px-1.5 py-0.5 rounded bg-gold-400/10 text-gold-400 font-semibold uppercase ml-auto">JavaScript</span>
+        <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/60 text-white/70 font-semibold uppercase ml-auto">JavaScript</span>
       </div>
       <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-white/[0.04]">
         <div>
@@ -52,7 +52,7 @@ function CodePlayground() {
         <div className="bg-black/40 p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] text-white/20">Output</span>
-            <button onClick={runCode} className="text-[11px] px-2.5 py-1 rounded-lg bg-gold-400/10 text-gold-400/80 hover:bg-gold-400/15 transition-colors font-medium">
+            <button onClick={runCode} className="text-[11px] px-2.5 py-1 rounded-lg bg-white/60 text-white/70/80 hover:bg-white/80 transition-colors font-medium">
               ▶ Run
             </button>
           </div>
@@ -73,8 +73,8 @@ export default function ToolsPage() {
           <ChevronLeft size={16} />
         </Link>
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-gold-400/[0.06] flex items-center justify-center">
-            <Wrench size={16} className="text-gold-400/50" />
+          <div className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center">
+            <Wrench size={16} className="text-white/30" />
           </div>
           <div>
             <h1 className="text-[15px] font-bold">Tools</h1>
@@ -99,8 +99,8 @@ export default function ToolsPage() {
                 onClick={() => tool.available && setActiveTool(tool.id)}
                 className={`glass-card p-5 text-left group relative overflow-hidden ${!tool.available ? 'opacity-50' : 'cursor-pointer'}`}
               >
-                <div className="w-10 h-10 rounded-xl bg-gold-400/[0.06] flex items-center justify-center mb-3 group-hover:bg-gold-400/[0.1] transition-colors">
-                  <tool.icon size={18} className="text-gold-400/50" />
+                <div className="w-10 h-10 rounded-xl bg-white/[0.04] flex items-center justify-center mb-3 group-hover:bg-white/[0.06] transition-colors">
+                  <tool.icon size={18} className="text-white/30" />
                 </div>
                 <h3 className="font-semibold text-[13px] mb-0.5">{tool.name}</h3>
                 <p className="text-[12px] text-white/25">{tool.desc}</p>
