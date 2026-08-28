@@ -17,6 +17,7 @@ export interface Message {
   created_at: string
   tokens_used?: number
   sources?: Source[]
+  attachments?: { name: string; type: string; size: number }[]
 }
 
 export interface Source {

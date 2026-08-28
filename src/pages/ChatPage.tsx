@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback, memo } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import {
-  Send, ChevronDown, Copy, Paperclip, Loader2,
+  Send, ChevronDown, Copy, Paperclip, Loader2, StopCircle,
   PanelLeftClose, PanelLeft, Brain, Code, Search,
-  Check, X, FileText, Mic, Image as ImageIcon, Zap
+  Check, X, FileText, Mic, Image as ImageIcon, Zap, ExternalLink
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import toast from 'react-hot-toast'
@@ -48,6 +48,61 @@ const MessageContent = memo(function MessageContent({ content, role }: { content
   )
 })
 
+// File attachment chip with hover tooltip
+function FileChip({ file, onOpen }: { file: { name: string; type: string; size: number }; onOpen?: () => void }) {
+  const [hovered, setHovered] = useState(false)
+  const ext = file.name.split('.').pop()?.toLowerCase() || ''
+  const isImage = file.type.startsWith('image/') || ['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(ext)
+  const isCode = ['js', 'ts', 'tsx', 'jsx', 'py', 'html', 'css', 'json', 'xml', 'yaml', 'yml', 'md', 'sql', 'sh'].includes(ext)
+  const isData = ['csv', 'tsv', 'xls', 'xlsx'].includes(ext)
+
+  const iconColor = isImage ? 'text-pink-400/60' : isCode ? 'text-emerald-400/60' : isData ? 'text-blue-400/60' : 'text-white/25'
+  const bgColor = isImage ? 'bg-pink-500/8' : isCode ? 'bg-emerald-500/8' : isData ? 'bg-blue-500/8' : 'bg-white/[0.03]'
+
+  return (
+    <div className="relative inline-flex"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}>
+      <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${bgColor} border border-white/[0.05] text-[11px] text-white/40 cursor-default transition-colors hover:border-white/[0.1]`}>
+        <FileText size={11} className={iconColor} />
+        <span className="truncate max-w-[120px]">{file.name}</span>
+        <span className="text-[9px] text-white/15">{Math.round(file.size / 1024)}KB</span>
+      </div>
+
+      {/* Hover tooltip */}
+      {hovered && (
+        <div className="absolute bottom-full left-0 mb-2 z-50 pointer-events-auto">
+          <div className="bg-[#1a1a1a] border border-white/[0.08] rounded-xl p-3 shadow-xl shadow-black/40 min-w-[220px] backdrop-blur-md">
+            <div className="flex items-center gap-2 mb-2">
+              <div className={`w-8 h-8 rounded-lg ${bgColor} flex items-center justify-center border border-white/[0.05]`}>
+                <FileText size={14} className={iconColor} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-[11px] font-medium text-white/70 truncate">{file.name}</div>
+                <div className="text-[10px] text-white/25">{file.type || 'unknown'} • {Math.round(file.size / 1024)}KB</div>
+              </div>
+            </div>
+            <div className="flex gap-1.5">
+              {onOpen && (
+                <button onClick={onOpen}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-violet-500/15 text-violet-400 text-[10px] font-medium hover:bg-violet-500/25 transition-colors">
+                  <ExternalLink size={10} />
+                  Open
+                </button>
+              )}
+              <button onClick={() => { navigator.clipboard.writeText(file.name); toast.success('Copied filename') }}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/[0.04] text-white/35 text-[10px] hover:bg-white/[0.08] transition-colors">
+                <Copy size={10} />
+                Copy name
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // Read file as text
 function readFileAsText(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -73,6 +128,7 @@ export default function ChatPage() {
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const conversationIdRef = useRef<string | null>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   const currentModel = getModelById(selectedModel)
 
@@ -110,6 +166,16 @@ export default function ChatPage() {
     setContextUsed(Math.min(100, Math.round((totalChars / maxContext) * 100)))
   }, [messages, currentModel])
 
+  // Stop generation
+  const handleStop = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+    }
+    setLoading(false)
+    toast('Generation stopped', { icon: '⏹️' })
+  }, [])
+
   const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     const newAttachments: Array<{ name: string; type: string; size: number; content?: string }> = []
@@ -134,12 +200,15 @@ export default function ChatPage() {
   const handleSend = useCallback(async () => {
     if ((!input.trim() && attachments.length === 0) || loading) return
 
+    const currentAttachments = attachments.map(a => ({ name: a.name, type: a.type, size: a.size }))
+
     const userMsg: Message = {
       id: crypto.randomUUID(),
       role: 'user',
       content: input.trim() || (attachments.length > 0 ? `Analyzing ${attachments.length} file(s)` : ''),
       model: selectedModel,
       created_at: new Date().toISOString(),
+      attachments: currentAttachments.length > 0 ? currentAttachments : undefined,
     }
 
     // Create or get conversation
@@ -166,6 +235,10 @@ export default function ChatPage() {
     setAttachments([])
     setLoading(true)
 
+    // Create abort controller for this request
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+
     try {
       const apiMessages = [...messages, userMsg].map(m => ({
         role: m.role,
@@ -175,6 +248,7 @@ export default function ChatPage() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           messages: apiMessages,
           model: selectedModel,
@@ -183,6 +257,7 @@ export default function ChatPage() {
             name: a.name,
             type: a.type,
             content: a.content,
+            size: a.size,
           })),
         }),
       })
@@ -204,6 +279,19 @@ export default function ChatPage() {
       addMessage(convId, assistantMsg)
       setMessages(prev => [...prev, assistantMsg])
     } catch (err: any) {
+      // Don't show error toast for aborted requests
+      if (err.name === 'AbortError') {
+        const stoppedMsg: Message = {
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content: '⏹️ Generation stopped by user.',
+          model: selectedModel,
+          created_at: new Date().toISOString(),
+        }
+        addMessage(convId, stoppedMsg)
+        setMessages(prev => [...prev, stoppedMsg])
+        return
+      }
       toast.error(err.message || 'Failed')
       const errMsg: Message = {
         id: crypto.randomUUID(),
@@ -216,6 +304,7 @@ export default function ChatPage() {
       setMessages(prev => [...prev, errMsg])
     } finally {
       setLoading(false)
+      abortControllerRef.current = null
     }
   }, [input, loading, messages, selectedModel, attachments, addConversation, addMessage, navigate])
 
@@ -224,6 +313,11 @@ export default function ChatPage() {
   }
 
   const handleNewChat = () => {
+    // Abort any in-flight request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+    }
     setMessages([])
     conversationIdRef.current = null
     setActiveConversation(null)
@@ -309,7 +403,7 @@ export default function ChatPage() {
           ) : (
             <div className="max-w-3xl mx-auto py-5 px-4">
               {messages.map((msg) => (
-                <div key={msg.id} className="mb-5">
+                <div key={msg.id} className="mb-5 group/msg">
                   <div className={`text-[13px] leading-relaxed ${msg.role === 'user' ? 'text-white/80' : 'text-white/70'}`}>
                     {msg.role === 'assistant' && (
                       <div className="flex items-center gap-1.5 mb-1 text-[11px] text-white/20">
@@ -318,12 +412,31 @@ export default function ChatPage() {
                       </div>
                     )}
                     <MessageContent content={msg.content} role={msg.role} />
+
+                    {/* Show attached files on user messages */}
+                    {msg.role === 'user' && msg.attachments && msg.attachments.length > 0 && (
+                      <div className="flex gap-1.5 mt-2 flex-wrap">
+                        {msg.attachments.map((file, i) => (
+                          <FileChip key={i} file={file} />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
               {loading && (
                 <div className="flex items-center gap-2 text-[12px] text-white/25 streaming-cursor">
+                  <div className="flex gap-0.5">
+                    <span className="w-1 h-1 rounded-full bg-violet-400/40 animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-1 h-1 rounded-full bg-violet-400/40 animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-1 h-1 rounded-full bg-violet-400/40 animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
                   <span>{currentModel?.name} is thinking</span>
+                  <button onClick={handleStop}
+                    className="ml-2 px-2 py-0.5 rounded-md bg-red-500/10 text-red-400/70 text-[10px] hover:bg-red-500/20 hover:text-red-400 transition-colors flex items-center gap-1">
+                    <StopCircle size={10} />
+                    Stop
+                  </button>
                 </div>
               )}
               <div ref={messagesEndRef} />
@@ -337,11 +450,11 @@ export default function ChatPage() {
             {attachments.length > 0 && (
               <div className="flex gap-2 mb-2 flex-wrap">
                 {attachments.map((a, i) => (
-                  <div key={i} className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.06] text-[11px] text-white/35">
+                  <div key={i} className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.06] text-[11px] text-white/35 group/chip">
                     <FileText size={11} />
                     <span className="truncate max-w-[100px]">{a.name}</span>
                     <span className="text-[9px] text-white/15">({Math.round(a.size / 1024)}KB)</span>
-                    <button onClick={() => removeAttachment(i)} className="text-white/15 hover:text-white/40"><X size={10} /></button>
+                    <button onClick={() => removeAttachment(i)} className="text-white/15 hover:text-white/40 transition-colors"><X size={10} /></button>
                   </div>
                 ))}
               </div>
@@ -360,10 +473,20 @@ export default function ChatPage() {
               <button className="p-2 rounded-xl hover:bg-white/[0.05] text-white/20 hover:text-white/40 transition-colors shrink-0" title="AudioCapture">
                 <Mic size={16} />
               </button>
-              <button onClick={handleSend} disabled={(!input.trim() && attachments.length === 0) || loading}
-                className="p-2 rounded-xl bg-violet-600 text-white disabled:opacity-20 disabled:cursor-not-allowed hover:bg-violet-500 transition-all shrink-0">
-                {loading ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
-              </button>
+
+              {/* Send button (when idle) OR Stop button (when loading) */}
+              {loading ? (
+                <button onClick={handleStop}
+                  className="p-2 rounded-xl bg-red-500/80 text-white hover:bg-red-500 transition-all shrink-0"
+                  title="Stop generating">
+                  <StopCircle size={15} />
+                </button>
+              ) : (
+                <button onClick={handleSend} disabled={!input.trim() && attachments.length === 0}
+                  className="p-2 rounded-xl bg-violet-600 text-white disabled:opacity-20 disabled:cursor-not-allowed hover:bg-violet-500 transition-all shrink-0">
+                  <Send size={15} />
+                </button>
+              )}
             </div>
             <div className="flex items-center justify-between mt-2 px-1">
               <div className="relative">
