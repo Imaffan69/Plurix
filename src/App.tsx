@@ -35,10 +35,24 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const user = useStore(s => s.user)
+  const loadCloudConversations = useStore(s => s.loadCloudConversations)
+
   // Initialize Supabase auth listener once on app mount
   useEffect(() => {
     initAuth()
   }, [])
+
+  // When user signs in, load their cloud conversations
+  useEffect(() => {
+    if (user) {
+      import('@/lib/cloudStorage').then(({ syncOnLogin }) => {
+        syncOnLogin().then(cloudConvs => {
+          if (cloudConvs.length > 0) loadCloudConversations(cloudConvs)
+        })
+      })
+    }
+  }, [user, loadCloudConversations])
 
   return (
     <Routes>
