@@ -48,42 +48,29 @@ export default function AuthPage() {
   const passwordCheck = mode === 'signup' ? validatePassword(password) : { valid: true, errors: [] }
   const passwordStrength = mode === 'signup' ? getPasswordStrength(password) : null
 
-  // === EMAIL SIGN IN (password first, then OTP fallback for unconfirmed emails) ===
+  // === SIGN IN (password) ===
   const handleEmailSignIn = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     if (loading) return
 
     setLoading(true)
     try {
-      // Try password-based sign-in first
       await signIn(email, password)
       toast.success('Welcome back!')
       navigate(returnTo, { replace: true })
     } catch (err: any) {
       const msg = err?.message || 'Authentication failed'
-      if (msg.includes('Invalid login credentials')) {
-        // Wrong password — try OTP as alternative
-        toast.loading('Sending verification code...', { id: 'otp' })
+      if (msg.includes('Invalid login credentials') || msg.includes('invalid') || msg.includes('not confirmed')) {
+        // Password failed or email not confirmed — fall back to OTP
+        toast('Sending verification code instead...', { icon: '📧' })
         try {
           await sendOtp(email, false)
-          toast.success('Verification code sent! Check your email for a 6-digit code.', { id: 'otp' })
+          toast.success('Check your email for a 6-digit code!', { duration: 5000 })
           setMode('otp-verify')
           setOtpSent(true)
           setOtpCountdown(60)
         } catch {
-          toast.error('Invalid email or password', { id: 'otp' })
-        }
-      } else if (msg.includes('Email not confirmed') || msg.includes('not confirmed')) {
-        // Email not verified — send OTP for verification
-        toast.loading('Sending verification code...', { id: 'otp' })
-        try {
-          await sendOtp(email, false)
-          toast.success('Verification code sent! Check your email for a 6-digit code.', { id: 'otp' })
-          setMode('otp-verify')
-          setOtpSent(true)
-          setOtpCountdown(60)
-        } catch {
-          toast.error('Could not send verification code. Try again.', { id: 'otp' })
+          toast.error('Invalid email or password. Please check your credentials.')
         }
       } else {
         toast.error(msg)
@@ -93,7 +80,7 @@ export default function AuthPage() {
     }
   }, [loading, email, password, navigate, returnTo])
 
-  // === SIGN UP (create account → send OTP for email verification) ===
+  // === SIGN UP ===
   const handleSignUp = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     if (loading) return
@@ -108,31 +95,17 @@ export default function AuthPage() {
       const data = await signUp(email, password, name)
 
       if (data?.session) {
-        // Auto-signed-in (email confirmation disabled in Supabase)
+        // Auto-signed-in (email confirmation disabled)
         toast.success('Account created! Welcome to Plurix.')
         navigate(returnTo, { replace: true })
-      } else if (data?.user?.identities?.length === 0) {
-        // User already exists with this email
-        toast.loading('Account exists. Sending verification code...', { id: 'otp' })
-        try {
-          await sendOtp(email, false)
-          toast.success('Verification code sent! Check your email for a 6-digit code.', { id: 'otp' })
-          setMode('otp-verify')
-          setOtpSent(true)
-          setOtpCountdown(60)
-        } catch {
-          toast.error('Account exists but could not send code. Try signing in instead.', { id: 'otp' })
-          setMode('signin')
-        }
       } else {
-        // Account created, needs email verification via OTP
-        toast.loading('Sending verification code...', { id: 'otp' })
+        // Needs email verification — send OTP
+        toast('Sending verification code...', { icon: '📧' })
         try {
           await sendOtp(email, false)
-          toast.success('Verification code sent! Check your email for a 6-digit code.', { id: 'otp' })
+          toast.success('Check your email for a 6-digit code!', { duration: 5000 })
         } catch {
-          // If OTP fails (user may need to confirm email first), show instructions
-          toast.success('Account created! Check your email for a verification link or code.', { id: 'otp' })
+          toast.success('Account created! Check your email for verification.')
         }
         setMode('otp-verify')
         setOtpSent(true)
@@ -140,17 +113,17 @@ export default function AuthPage() {
       }
     } catch (err: any) {
       const msg = err?.message || 'Sign up failed'
-      if (msg.includes('already registered') || msg.includes('already exists')) {
-        // Already registered — send OTP for existing user
-        toast.loading('Account exists. Sending verification code...', { id: 'otp' })
+      if (msg.includes('already') || msg.includes('exists')) {
+        // Already exists — send OTP for existing user
+        toast('Account exists. Sending verification code...', { icon: '📧' })
         try {
           await sendOtp(email, false)
-          toast.success('Verification code sent! Check your email for a 6-digit code.', { id: 'otp' })
+          toast.success('Check your email for a 6-digit code!', { duration: 5000 })
           setMode('otp-verify')
           setOtpSent(true)
           setOtpCountdown(60)
         } catch {
-          toast.error('Account exists but could not send code. Try password sign-in.', { id: 'otp' })
+          toast.error('Account exists. Try signing in with your password.')
         }
       } else {
         toast.error(msg)
@@ -174,10 +147,8 @@ export default function AuthPage() {
       const msg = err?.message || 'Invalid code'
       if (msg.includes('expired')) {
         toast.error('Code expired. Request a new one.')
-      } else if (msg.includes('invalid') || msg.includes('Token')) {
-        toast.error('Invalid verification code. Check and try again.')
       } else {
-        toast.error(msg)
+        toast.error('Invalid code. Check your email and try again.')
       }
     } finally {
       setLoading(false)
@@ -204,21 +175,17 @@ export default function AuthPage() {
     try {
       if (provider === 'google') await signInWithGoogle()
       else await signInWithGitHub()
-      // signInWithOAuth triggers a browser redirect — no further code runs here
     } catch (err: any) {
       const msg = err?.message || ''
       if (msg.includes('not configured')) {
         toast.error(msg, { duration: 6000 })
       } else if (msg.includes('provider is not enabled')) {
         toast.error(
-          `${provider} is not enabled in your Supabase dashboard. Go to Authentication → Providers → ${provider} and enable it.`,
+          `${provider} is not enabled in Supabase. Go to Authentication → Providers → ${provider} and enable it.`,
           { duration: 8000 }
         )
       } else {
-        toast.error(
-          `${provider} sign-in failed: ${msg || 'Unknown error'}. Check Supabase dashboard settings.`,
-          { duration: 8000 }
-        )
+        toast.error(`${provider} sign-in failed. Check Supabase dashboard settings.`, { duration: 8000 })
       }
     }
   }
@@ -231,7 +198,6 @@ export default function AuthPage() {
     { met: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password), label: 'Special character' },
   ] : []
 
-  // Don't render form if already logged in
   if (authInitialized && user) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -472,6 +438,35 @@ export default function AuthPage() {
                     </button>
                   </div>
                 </form>
+
+                {/* Send OTP directly */}
+                {mode === 'signin' && (
+                  <div className="mt-3 text-center">
+                    <button
+                      onClick={async () => {
+                        if (!email) {
+                          toast.error('Enter your email first')
+                          return
+                        }
+                        setLoading(true)
+                        try {
+                          await sendOtp(email, true)
+                          toast.success('Check your email for a 6-digit code!')
+                          setMode('otp-verify')
+                          setOtpSent(true)
+                          setOtpCountdown(60)
+                        } catch (err: any) {
+                          toast.error(err?.message || 'Could not send code')
+                        } finally {
+                          setLoading(false)
+                        }
+                      }}
+                      className="text-gold-400/70 hover:text-gold-400 text-xs transition-colors font-medium"
+                    >
+                      Sign in with email code instead
+                    </button>
+                  </div>
+                )}
 
                 <div className="mt-5 text-center text-sm text-white/35">
                   {mode === 'signin' ? (
