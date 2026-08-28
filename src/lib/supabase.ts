@@ -138,6 +138,36 @@ export async function getSession(): Promise<Session | null> {
   return session
 }
 
+export async function sendOtp(email: string) {
+  assertConfigured('OTP')
+  const { data, error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser: false,
+    },
+  })
+  if (error) throw error
+  return data
+}
+
+export async function verifyOtp(email: string, token: string) {
+  assertConfigured('OTP verification')
+  const { data, error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: 'email',
+  })
+  if (error) throw error
+  // Immediately update the store
+  if (data?.user) {
+    const s = useStore.getState()
+    s.setUser(supabaseUserToAppUser(data.user))
+    s.setAuthLoading(false)
+    s.setAuthInitialized(true)
+  }
+  return data
+}
+
 export async function resetPassword(email: string) {
   assertConfigured('Password reset')
   const { error } = await supabase.auth.resetPasswordForEmail(email, {

@@ -1,16 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Mail, Lock, User, Eye, EyeOff, ArrowRight,
   Github, Chrome, Loader2, CheckCircle2,
-  Check, X, Shield
+  Check, X, Shield, KeyRound, ArrowLeft
 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { signUp, signIn, signInWithGoogle, signInWithGitHub, validatePassword, getPasswordStrength, supabase } from '@/lib/supabase'
+import { signUp, signIn, signInWithGoogle, signInWithGitHub, validatePassword, getPasswordStrength, sendOtp, verifyOtp } from '@/lib/supabase'
 import { useStore } from '@/store'
+import { config } from '@/config'
 
-type AuthMode = 'signin' | 'signup' | 'otp'
+type AuthMode = 'signin' | 'signup' | 'otp-verify'
 
 export default function AuthPage() {
   const navigate = useNavigate()
@@ -24,7 +25,11 @@ export default function AuthPage() {
   const [name, setName] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [otpCode, setOtpCode] = useState('')
   const [otpSent, setOtpSent] = useState(false)
+  const [otpCountdown, setOtpCountdown] = useState(0)
+
+  const isConfigured = Boolean(config.supabaseUrl && config.supabaseAnonKey)
 
   // If already logged in, redirect immediately
   useEffect(() => {
@@ -33,64 +38,133 @@ export default function AuthPage() {
     }
   }, [user, authInitialized, navigate, returnTo])
 
+  // OTP countdown timer
+  useEffect(() => {
+    if (otpCountdown <= 0) return
+    const t = setInterval(() => setOtpCountdown(c => c - 1), 1000)
+    return () => clearInterval(t)
+  }, [otpCountdown])
+
   const passwordCheck = mode === 'signup' ? validatePassword(password) : { valid: true, errors: [] }
   const passwordStrength = mode === 'signup' ? getPasswordStrength(password) : null
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleEmailSignIn = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     if (loading) return
 
-    if (!isConfigured) {
-      toast.error('Authentication not configured. Add Supabase keys in Settings → Environment.', { duration: 6000 })
-      return
-    }
-
     setLoading(true)
     try {
-      if (mode === 'signup') {
-        if (!passwordCheck.valid) {
-          toast.error('Please meet all password requirements')
-          setLoading(false)
-          return
-        }
-        await signUp(email, password, name)
-        toast.success('Account created! Check your email for verification.')
-        setMode('otp')
-        setOtpSent(true)
-      } else {
-        await signIn(email, password)
-        toast.success('Welcome back!')
-        // signIn() immediately updates the store, so navigate directly
-        navigate(returnTo, { replace: true })
-      }
+      await signIn(email, password)
+      toast.success('Welcome back!')
+      navigate(returnTo, { replace: true })
     } catch (err: any) {
       const msg = err?.message || 'Authentication failed'
-      if (msg.includes('not configured')) {
-        toast.error(msg, { duration: 6000 })
-      } else if (msg.includes('Invalid login credentials')) {
+      if (msg.includes('Invalid login credentials')) {
         toast.error('Invalid email or password')
-      } else if (msg.includes('already registered')) {
-        toast.error('An account with this email already exists')
-      } else if (msg.includes('Password should')) {
-        toast.error('Password does not meet requirements')
+      } else if (msg.includes('Email not confirmed')) {
+        // Email not verified — send OTP instead
+        toast.loading('Sending verification code...', { id: 'otp' })
+        try {
+          await sendOtp(email)
+          toast.success('Verification code sent! Check your email.', { id: 'otp' })
+          setMode('otp-verify')
+          setOtpSent(true)
+          setOtpCountdown(60)
+        } catch {
+          toast.error('Could not send verification code. Try again.', { id: 'otp' })
+        }
       } else {
         toast.error(msg)
       }
     } finally {
       setLoading(false)
     }
-  }
+  }, [loading, email, password, navigate, returnTo])
 
-  // Check if Supabase is configured
-  const isConfigured = Boolean(
-    import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY
-  )
+  const handleSignUp = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (loading) return
 
-  const handleOAuth = async (provider: 'google' | 'github') => {
-    if (!isConfigured) {
-      toast.error('Authentication not configured. Add Supabase keys in Settings → Environment.', { duration: 6000 })
+    if (!passwordCheck.valid) {
+      toast.error('Please meet all password requirements')
       return
     }
+
+    setLoading(true)
+    try {
+      const data = await signUp(email, password, name)
+      // Supabase may auto-sign-in or may require email confirmation
+      if (data?.session) {
+        toast.success('Account created! Welcome to Plurix.')
+        navigate(returnTo, { replace: true })
+      } else {
+        // Need email verification — send OTP
+        toast.loading('Sending verification code...', { id: 'otp' })
+        try {
+          await sendOtp(email)
+          toast.success('Verification code sent! Check your email.', { id: 'otp' })
+        } catch {
+          toast.success('Account created! Check your email for verification.', { id: 'otp' })
+        }
+        setMode('otp-verify')
+        setOtpSent(true)
+        setOtpCountdown(60)
+      }
+    } catch (err: any) {
+      const msg = err?.message || 'Sign up failed'
+      if (msg.includes('already registered')) {
+        // Already registered — try sending OTP for existing user
+        toast.loading('Account exists. Sending verification code...', { id: 'otp' })
+        try {
+          await sendOtp(email)
+          toast.success('Verification code sent! Check your email.', { id: 'otp' })
+          setMode('otp-verify')
+          setOtpSent(true)
+          setOtpCountdown(60)
+        } catch {
+          toast.error('Account exists but could not send code. Try password sign-in.')
+        }
+      } else {
+        toast.error(msg)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }, [loading, email, password, name, passwordCheck.valid, navigate, returnTo])
+
+  const handleOtpVerify = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (loading || otpCode.length !== 6) return
+
+    setLoading(true)
+    try {
+      await verifyOtp(email, otpCode)
+      toast.success('Verified! Welcome to Plurix.')
+      navigate(returnTo, { replace: true })
+    } catch (err: any) {
+      const msg = err?.message || 'Invalid code'
+      if (msg.includes('expired')) {
+        toast.error('Code expired. Request a new one.')
+      } else {
+        toast.error('Invalid verification code')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }, [loading, otpCode, email, navigate, returnTo])
+
+  const handleResendOtp = useCallback(async () => {
+    if (otpCountdown > 0) return
+    try {
+      await sendOtp(email)
+      toast.success('New code sent!')
+      setOtpCountdown(60)
+    } catch {
+      toast.error('Could not send code. Try again.')
+    }
+  }, [otpCountdown, email])
+
+  const handleOAuth = async (provider: 'google' | 'github') => {
     try {
       if (provider === 'google') await signInWithGoogle()
       else await signInWithGitHub()
@@ -109,7 +183,7 @@ export default function AuthPage() {
     { met: /[A-Z]/.test(password), label: 'Uppercase letter' },
     { met: /[a-z]/.test(password), label: 'Lowercase letter' },
     { met: /[0-9]/.test(password), label: 'Number' },
-    { met: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\\/?]/.test(password), label: 'Special character' },
+    { met: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password), label: 'Special character' },
   ] : []
 
   // Don't render form if already logged in
@@ -144,30 +218,80 @@ export default function AuthPage() {
 
         <div className="glass-card p-7">
           <AnimatePresence mode="wait">
-            {otpSent ? (
+            {mode === 'otp-verify' ? (
+              /* ===== OTP VERIFICATION ===== */
               <motion.div
                 key="otp"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="text-center py-6"
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 12 }}
+                transition={{ duration: 0.25 }}
               >
-                <div className="w-14 h-14 rounded-2xl bg-gold-400/10 flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle2 size={28} className="text-gold-400" />
-                </div>
-                <h2 className="text-lg font-bold mb-1">Check your email</h2>
-                <p className="text-white/40 text-sm mb-6">
-                  We sent a verification link to<br />
-                  <span className="text-white/70">{email}</span>
-                </p>
                 <button
-                  onClick={() => navigate(returnTo, { replace: true })}
-                  className="btn-primary w-full justify-center"
+                  onClick={() => { setMode('signin'); setOtpCode(''); setOtpSent(false) }}
+                  className="flex items-center gap-1.5 text-white/30 hover:text-white/60 text-xs mb-4 transition-colors"
                 >
-                  Continue to Plurix <ArrowRight size={14} />
+                  <ArrowLeft size={13} />
+                  Back to sign in
                 </button>
+
+                <div className="w-14 h-14 rounded-2xl bg-gold-400/10 flex items-center justify-center mx-auto mb-4">
+                  <KeyRound size={28} className="text-gold-400" />
+                </div>
+                <h2 className="text-xl font-bold text-center mb-1">Enter verification code</h2>
+                <p className="text-white/35 text-sm text-center mb-6">
+                  We sent a 6-digit code to<br />
+                  <span className="text-white/70 font-medium">{email}</span>
+                </p>
+
+                <form onSubmit={handleOtpVerify} className="space-y-4">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      placeholder="000000"
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                      className="glass-input text-center text-2xl tracking-[0.5em] font-mono py-4"
+                      autoFocus
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn-primary w-full justify-center py-2.5"
+                    disabled={loading || otpCode.length !== 6}
+                  >
+                    {loading ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <>
+                        Verify & Sign In
+                        <ArrowRight size={14} />
+                      </>
+                    )}
+                  </button>
+                </form>
+
+                <div className="mt-4 text-center">
+                  {otpCountdown > 0 ? (
+                    <p className="text-white/25 text-xs">
+                      Resend code in {otpCountdown}s
+                    </p>
+                  ) : (
+                    <button
+                      onClick={handleResendOtp}
+                      className="text-gold-400 hover:text-gold-300 text-xs transition-colors font-medium"
+                    >
+                      Resend code
+                    </button>
+                  )}
+                </div>
               </motion.div>
             ) : (
+              /* ===== SIGN IN / SIGN UP ===== */
               <motion.div
                 key={mode}
                 initial={{ opacity: 0, x: -12 }}
@@ -185,20 +309,14 @@ export default function AuthPage() {
                 </p>
 
                 {/* OAuth */}
-                <div className="grid grid-cols-2 gap-2.5 mb-5">
-                  <button onClick={() => handleOAuth('google')} className="btn-secondary justify-center text-[13px]" disabled={!isConfigured}>
-                    <Chrome size={15} /> Google
-                  </button>
-                  <button onClick={() => handleOAuth('github')} className="btn-secondary justify-center text-[13px]" disabled={!isConfigured}>
-                    <Github size={15} /> GitHub
-                  </button>
-                </div>
-
-                {!isConfigured && (
-                  <div className="mb-4 px-3 py-2 rounded-lg bg-gold-400/[0.06] border border-gold-400/10">
-                    <p className="text-[11px] text-gold-400/80 leading-relaxed">
-                      Google sign-in requires Supabase. Add your VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Settings → Environment to enable it.
-                    </p>
+                {isConfigured && (
+                  <div className="grid grid-cols-2 gap-2.5 mb-5">
+                    <button onClick={() => handleOAuth('google')} className="btn-secondary justify-center text-[13px]">
+                      <Chrome size={15} /> Google
+                    </button>
+                    <button onClick={() => handleOAuth('github')} className="btn-secondary justify-center text-[13px]">
+                      <Github size={15} /> GitHub
+                    </button>
                   </div>
                 )}
 
@@ -208,7 +326,7 @@ export default function AuthPage() {
                   <div className="flex-1 h-px bg-white/[0.06]" />
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-2.5">
+                <form onSubmit={mode === 'signup' ? handleSignUp : handleEmailSignIn} className="space-y-2.5">
                   {mode === 'signup' && (
                     <div className="relative">
                       <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/25" />
