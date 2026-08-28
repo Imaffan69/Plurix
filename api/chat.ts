@@ -84,13 +84,25 @@ function extractImagePrompt(text: string): string {
 const MAX_FILE_CHARS = 200000  // ~200KB per file
 const MAX_TOTAL_FILE_CHARS = 800000  // ~800KB total across all files
 
-function processFiles(files: any[]): string {
-  if (!files || !Array.isArray(files) || files.length === 0) return ''
+// Check if a file is binary (image/PDF) based on type or content prefix
+function isBinaryFile(f: any): boolean {
+  const type = f.type || ''
+  const name = (f.name || '').toLowerCase()
+  return type.startsWith('image/') || type === 'application/pdf' ||
+    name.endsWith('.png') || name.endsWith('.jpg') || name.endsWith('.jpeg') ||
+    name.endsWith('.gif') || name.endsWith('.webp') || name.endsWith('.pdf')
+}
+
+// Process text files into a context string
+function processTextFiles(files: any[]): string {
+  if (!files || !Array.isArray(files)) return ''
 
   const fileParts: string[] = []
   let totalChars = 0
 
   for (const f of files) {
+    if (isBinaryFile(f)) continue  // Skip binary files here
+
     const name = f.name || 'unknown-file'
     const type = f.type || 'unknown'
     const size = f.size || 0
@@ -111,11 +123,28 @@ function processFiles(files: any[]): string {
 
       fileParts.push(`📄 File: ${name} (${type}, ${Math.round(size / 1024)}KB)\n\`\`\`\n${truncated}\n\`\`\``)
     } else {
-      fileParts.push(`📄 File: ${name} (${type}, ${Math.round(size / 1024)}KB) — binary file, not readable as text`)
+      fileParts.push(`📄 File: ${name} (${type}, ${Math.round(size / 1024)}KB) — empty or unreadable`)
     }
   }
 
   return fileParts.join('\n\n')
+}
+
+// Process binary files (images/PDFs) into base64 inline data for Gemini
+function processBinaryFiles(files: any[]): Array<{ mimeType: string; data: string }> {
+  if (!files || !Array.isArray(files)) return []
+
+  const parts: Array<{ mimeType: string; data: string }> = []
+  for (const f of files) {
+    if (!isBinaryFile(f)) continue
+    const content = f.content || ''
+    // content is a data URL like "data:image/png;base64,iVBOR..."
+    const match = content.match(/^data:([^;]+);base64,(.+)$/)
+    if (match) {
+      parts.push({ mimeType: match[1], data: match[2] })
+    }
+  }
+  return parts
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -160,39 +189,50 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!apiKey)
     return res.status(503).json({ error: `${config.provider.toUpperCase()}_API_KEY not configured. Get free keys from the provider's website.` })
 
-  // Process files safely (truncated to avoid 413)
-  const fileContext = processFiles(files)
+  // Process files — text files as context, binary files as base64
+  const textContext = processTextFiles(files)
+  const binaryParts = processBinaryFiles(files)
+  const hasBinaryFiles = binaryParts.length > 0
   let processedMessages = [...messages]
 
-  if (fileContext) {
+  if (textContext) {
     const lastUserIdx = processedMessages.findLastIndex((m: any) => m.role === 'user')
     if (lastUserIdx >= 0) {
       processedMessages[lastUserIdx] = {
         ...processedMessages[lastUserIdx],
-        content: `The user has attached ${files.length} file(s):\n\n${fileContext}\n\n---\n\nUser's message: ${processedMessages[lastUserIdx].content}`,
+        content: `The user has attached files:\n\n${textContext}\n\n---\n\nUser's message: ${processedMessages[lastUserIdx].content}`,
       }
     }
+  }
 
-    // Add system instruction for file analysis
-    const hasSystem = processedMessages.some((m: any) => m.role === 'system')
-    if (!hasSystem) {
-      processedMessages.unshift({
-        role: 'system',
-        content: 'The user has attached files. Read and analyze them carefully. Reference specific content from the files in your response.',
-      })
-    }
+  // Add system instruction for file analysis
+  if ((textContext || hasBinaryFiles) && !processedMessages.some((m: any) => m.role === 'system')) {
+    processedMessages.unshift({
+      role: 'system',
+      content: 'The user has attached files (text documents, code, images, or PDFs). Read and analyze them carefully. For images, describe what you see. For code/text, reference specific content. For PDFs, extract and analyze the text.',
+    })
   }
 
   try {
     let responseText = ''
 
     if (config.provider === 'gemini') {
-      const contents = processedMessages
-        .filter((m: any) => m.role !== 'system')
-        .map((m: any) => ({
-          role: m.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: m.content }],
-        }))
+      // Build Gemini contents with multimodal support
+      const contents: any[] = []
+      for (const m of processedMessages) {
+        if (m.role === 'system') continue
+        const role = m.role === 'assistant' ? 'model' : 'user'
+        const parts: any[] = [{ text: m.content }]
+        
+        // Attach binary files (images/PDFs) to the last user message
+        if (role === 'user' && hasBinaryFiles && m === processedMessages.filter((x: any) => x.role === 'user').pop()) {
+          for (const bp of binaryParts) {
+            parts.push({ inlineData: { mimeType: bp.mimeType, data: bp.data } })
+          }
+        }
+        
+        contents.push({ role, parts })
+      }
 
       const systemMsg = processedMessages.find((m: any) => m.role === 'system')
       const payload: any = {

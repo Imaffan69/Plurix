@@ -113,6 +113,25 @@ function readFileAsText(file: File): Promise<string> {
   })
 }
 
+// Read file as base64 data URL (for images/PDFs)
+function readFileAsBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = () => reject(new Error('Failed to read file'))
+    reader.readAsDataURL(file)
+  })
+}
+
+// Check if file is an image or binary that should be sent as base64
+function isBinaryFile(file: File): boolean {
+  return file.type.startsWith('image/') ||
+    file.type === 'application/pdf' ||
+    file.name.endsWith('.png') || file.name.endsWith('.jpg') ||
+    file.name.endsWith('.jpeg') || file.name.endsWith('.gif') ||
+    file.name.endsWith('.webp') || file.name.endsWith('.pdf')
+}
+
 export default function ChatPage() {
   const { id: conversationId } = useParams()
   const navigate = useNavigate()
@@ -178,25 +197,19 @@ export default function ChatPage() {
 
   const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
-    const MAX_FILE_SIZE = 5 * 1024 * 1024  // 5MB per file
-    const MAX_TOTAL_SIZE = 10 * 1024 * 1024  // 10MB total
     const newAttachments: Array<{ name: string; type: string; size: number; content?: string }> = []
-    const currentTotal = attachments.reduce((sum, a) => sum + a.size, 0)
-    let runningTotal = currentTotal
 
     for (const f of files) {
-      if (f.size > MAX_FILE_SIZE) {
-        toast.error(`${f.name} is too large (${Math.round(f.size / 1024)}KB). Max 5MB per file.`)
-        continue
-      }
-      runningTotal += f.size
-      if (runningTotal > MAX_TOTAL_SIZE) {
-        toast.error('Total file size exceeds 10MB. Remove some files first.')
-        break
-      }
       try {
-        const content = await readFileAsText(f)
-        newAttachments.push({ name: f.name, type: f.type, size: f.size, content })
+        if (isBinaryFile(f)) {
+          // Images/PDFs → read as base64 data URL
+          const base64 = await readFileAsBase64(f)
+          newAttachments.push({ name: f.name, type: f.type, size: f.size, content: base64 })
+        } else {
+          // Text files → read as plain text
+          const content = await readFileAsText(f)
+          newAttachments.push({ name: f.name, type: f.type, size: f.size, content })
+        }
       } catch {
         newAttachments.push({ name: f.name, type: f.type, size: f.size })
       }
@@ -204,7 +217,7 @@ export default function ChatPage() {
 
     setAttachments(prev => [...prev, ...newAttachments])
     e.target.value = ''
-  }, [attachments])
+  }, [])
 
   const removeAttachment = useCallback((index: number) => {
     setAttachments(prev => prev.filter((_, i) => i !== index))
@@ -477,7 +490,7 @@ export default function ChatPage() {
                 <Paperclip size={16} />
               </button>
               <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileSelect}
-                accept=".txt,.csv,.json,.md,.ts,.tsx,.js,.jsx,.py,.html,.css,.xml,.yaml,.yml,.log,.sql,.sh,.env,.config,.tsv,.pdf,.png,.jpg,.jpeg,.gif,.webp,.doc,.docx" />
+                accept=".txt,.csv,.json,.md,.ts,.tsx,.js,.jsx,.py,.html,.css,.xml,.yaml,.yml,.log,.sql,.sh,.env,.config,.tsv,.pdf,.png,.jpg,.jpeg,.gif,.webp" />
               <textarea ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown}
                 placeholder={`Message ${currentModel?.name || 'Plurix'}...`}
                 className="flex-1 bg-transparent resize-none outline-none text-[13px] text-white/80 placeholder:text-white/18 py-2 px-1 max-h-36 min-h-[32px]"

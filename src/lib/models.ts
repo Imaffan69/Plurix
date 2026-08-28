@@ -276,10 +276,10 @@ export const AI_MODELS: AIModelInfo[] = [
   },
   {
     id: 'openrouter-free',
-    name: 'Auto (Best Free)',
+    name: 'Plurix V1',
     provider: 'OpenRouter',
-    description: 'Routes to best available free model',
-    icon: '🎲',
+    description: 'Auto-routes to best available free model',
+    icon: '✦',
     color: '#8b5cf6',
     speed: 'fast',
     free: true,

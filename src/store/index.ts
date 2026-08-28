@@ -22,7 +22,7 @@ function saveActiveConversation(id: string | null) {
 }
 
 function loadSelectedModel(): AIModel {
-  try { return (localStorage.getItem('plurix_model') as AIModel) || 'gpt-oss-120b' } catch { return 'gpt-oss-120b' }
+  try { return (localStorage.getItem('plurix_model') as AIModel) || 'openrouter-free' } catch { return 'openrouter-free' }
 }
 
 // Lazy-import cloud storage to avoid circular deps
