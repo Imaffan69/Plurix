@@ -10,10 +10,9 @@ describe('Zustand store', () => {
       authInitialized: false,
       conversations: [],
       activeConversation: null,
-      selectedModel: 'gemini-3.7-flash',
+      selectedModel: 'gpt-oss-120b',
       sidebarOpen: true,
       theme: 'dark',
-      commandPaletteOpen: false,
     })
   })
 
@@ -50,19 +49,18 @@ describe('Zustand store', () => {
   })
 
   describe('model selection', () => {
-    it('defaults to gemini-3.7-flash', () => {
-      expect(useStore.getState().selectedModel).toBe('gemini-3.7-flash')
+    it('defaults to gpt-oss-120b', () => {
+      expect(useStore.getState().selectedModel).toBe('gpt-oss-120b')
     })
 
     it('setSelectedModel updates the model', () => {
-      useStore.getState().setSelectedModel('gpt-oss-120b' as AIModel)
-      expect(useStore.getState().selectedModel).toBe('gpt-oss-120b')
+      useStore.getState().setSelectedModel('qwen-3.8-27b' as AIModel)
+      expect(useStore.getState().selectedModel).toBe('qwen-3.8-27b')
     })
 
     it('setSelectedModel accepts all model types', () => {
       const models: AIModel[] = [
-        'gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash',
-        'nemotron-3.5-lightning', 'qwen-3.8-27b', 'gpt-oss-120b',
+        'gemini-3.5-flash', 'nemotron-3.5-lightning', 'qwen-3.8-27b', 'gpt-oss-120b',
       ]
       for (const m of models) {
         useStore.getState().setSelectedModel(m)
@@ -163,17 +161,6 @@ describe('Zustand store', () => {
       expect(useStore.getState().activeConversation).toBe('c1')
       useStore.getState().setActiveConversation(null)
       expect(useStore.getState().activeConversation).toBeNull()
-    })
-  })
-
-  describe('command palette', () => {
-    it('defaults to closed', () => {
-      expect(useStore.getState().commandPaletteOpen).toBe(false)
-    })
-
-    it('setCommandPaletteOpen toggles', () => {
-      useStore.getState().setCommandPaletteOpen(true)
-      expect(useStore.getState().commandPaletteOpen).toBe(true)
     })
   })
 })

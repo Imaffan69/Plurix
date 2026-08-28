@@ -36,12 +36,10 @@ export interface Conversation {
 }
 
 export type AIModel = 
-  | 'gemini-3.7-flash'
-  | 'gemini-3.6-flash'
   | 'gemini-3.5-flash'
+  | 'gpt-oss-120b'
   | 'qwen-3.8-27b'
   | 'qwen-3.6-27b'
-  | 'gpt-oss-120b'
   | 'gpt-oss-20b'
   | 'allam-2-7b'
   | 'nemotron-ultra-550b'
@@ -50,7 +48,6 @@ export type AIModel =
   | 'gemma-4-31b'
   | 'gemma-4-26b'
   | 'minimax-m3'
-  | 'glm-5.2'
   | 'cohere-north-mini'
   | 'inkling'
   | 'openrouter-free'

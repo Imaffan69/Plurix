@@ -40,8 +40,6 @@ export const REQUIRED_ENV_VARS = [
 
 // Which provider each model uses
 export const MODEL_PROVIDERS: Partial<Record<AIModel, string>> = {
-  'gemini-3.7-flash': 'GOOGLE_API_KEY',
-  'gemini-3.6-flash': 'GOOGLE_API_KEY',
   'gemini-3.5-flash': 'GOOGLE_API_KEY',
   'qwen-3.8-27b': 'GROQ_API_KEY',
   'qwen-3.6-27b': 'GROQ_API_KEY',
@@ -54,7 +52,6 @@ export const MODEL_PROVIDERS: Partial<Record<AIModel, string>> = {
   'gemma-4-31b': 'OPENROUTER_API_KEY',
   'gemma-4-26b': 'OPENROUTER_API_KEY',
   'minimax-m3': 'OPENROUTER_API_KEY',
-  'glm-5.2': 'OPENROUTER_API_KEY',
   'cohere-north-mini': 'OPENROUTER_API_KEY',
   'inkling': 'OPENROUTER_API_KEY',
   'openrouter-free': 'OPENROUTER_API_KEY',

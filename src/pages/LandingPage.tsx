@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowRight, Zap, Globe, Shield, Brain, MessageSquare, Code, Image, Search, ChevronRight, Lock, ArrowUpRight } from 'lucide-react'
+import { useStore } from '@/store'
 
 const models = [
-  { name: 'Gemini 3.7 Flash', provider: 'Google' },
-  { name: 'Nemotron Ultra 550B', provider: 'NVIDIA' },
+  { name: 'GPT-OSS 120B', provider: 'OpenAI • Recommended' },
   { name: 'Qwen 3.8 27B', provider: 'Alibaba' },
-  { name: 'GPT-OSS 120B', provider: 'OpenAI' },
+  { name: 'Nemotron Ultra 550B', provider: 'NVIDIA' },
+  { name: 'Gemini 3.5 Flash', provider: 'Google' },
   { name: 'Gemma 4 31B', provider: 'Google' },
   { name: 'MiniMax M3', provider: 'MiniMax' },
 ]
@@ -23,6 +24,7 @@ const features = [
 ]
 
 export default function LandingPage() {
+  const user = useStore(s => s.user)
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white overflow-hidden">
       <div className="fixed inset-0 pointer-events-none">
@@ -41,8 +43,14 @@ export default function LandingPage() {
             <Link to="/terms" className="hover:text-white/80 transition-colors">Terms</Link>
           </div>
           <div className="flex items-center gap-2">
-            <Link to="/auth" className="btn-ghost text-[13px]">Sign In</Link>
-            <Link to="/auth" className="btn-primary text-[13px]">Get Started <ArrowRight size={13} /></Link>
+            {user ? (
+              <Link to="/chat" className="btn-primary text-[13px]">Start Chatting <ArrowRight size={13} /></Link>
+            ) : (
+              <>
+                <Link to="/auth" className="btn-ghost text-[13px]">Sign In</Link>
+                <Link to="/auth" className="btn-primary text-[13px]">Get Started <ArrowRight size={13} /></Link>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -61,7 +69,11 @@ export default function LandingPage() {
             Chat with Gemini, Nemotron 550B, Qwen 3.8, GPT-OSS 120B — all free, all fast, one interface.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5">
-            <Link to="/auth" className="btn-primary text-[13px] px-6 py-2">Start Free <ArrowRight size={14} /></Link>
+            {user ? (
+              <Link to="/chat" className="btn-primary text-[13px] px-6 py-2">Start Chatting <ArrowRight size={14} /></Link>
+            ) : (
+              <Link to="/auth" className="btn-primary text-[13px] px-6 py-2">Start Free <ArrowRight size={14} /></Link>
+            )}
             <a href="#features" className="btn-secondary text-[13px] px-6 py-2">See Features <ChevronRight size={14} /></a>
           </div>
           <div className="mt-12 flex flex-wrap justify-center gap-2">
@@ -131,7 +143,11 @@ export default function LandingPage() {
               We don't sell your data. We don't train on your prompts. Encrypted and secure.
             </p>
             <div className="flex items-center justify-center gap-2.5">
+              {user ? (
+              <Link to="/chat" className="btn-primary text-[13px] px-5 py-2">Start Chatting <ArrowRight size={14} /></Link>
+            ) : (
               <Link to="/auth" className="btn-primary text-[13px] px-5 py-2">Start Free <ArrowRight size={14} /></Link>
+            )}
               <Link to="/privacy" className="btn-secondary text-[13px] px-5 py-2">Privacy Policy</Link>
             </div>
           </div>
