@@ -21,7 +21,6 @@ export default function SettingsPage() {
       setName(user.name || '')
       setEmail(user.email || '')
     }
-    // Check email verification from Supabase directly
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
         setEmailVerified(data.user.email_confirmed_at != null)
@@ -34,11 +33,8 @@ export default function SettingsPage() {
     try {
       const { data: { user: sbUser } } = await supabase.auth.getUser()
       if (sbUser && name !== (sbUser.user_metadata?.name || '')) {
-        const { error } = await supabase.auth.updateUser({
-          data: { name }
-        })
+        const { error } = await supabase.auth.updateUser({ data: { name } })
         if (error) throw error
-        // Update store user
         if (user) setUser({ ...user, name })
       }
       toast.success('Settings saved')
@@ -55,18 +51,21 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#09090b]">
-      <div className="border-b border-white/[0.04] px-5 py-3 flex items-center gap-3">
-        <Link to="/chat" className="p-1.5 rounded-lg hover:bg-white/[0.05] text-white/30 hover:text-white/60">
+    <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
+      <div className="px-5 py-3 flex items-center gap-3" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+        <Link to="/chat" className="p-1.5 rounded-lg transition-colors"
+          style={{ color: 'var(--text-ghost)' }}
+          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}
+          onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-ghost)'}>
           <ChevronLeft size={16} />
         </Link>
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center">
-            <User size={16} className="text-white/40" />
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'var(--bg-glass)' }}>
+            <User size={16} style={{ color: 'var(--text-tertiary)' }} />
           </div>
           <div>
             <h1 className="text-[15px] font-bold">Settings</h1>
-            <p className="text-[11px] text-white/25">Manage your account</p>
+            <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>Manage your account</p>
           </div>
         </div>
       </div>
@@ -74,25 +73,26 @@ export default function SettingsPage() {
       <div className="max-w-xl mx-auto p-5 space-y-4">
         {/* Profile */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-5">
-          <h3 className="text-[13px] font-semibold mb-4 flex items-center gap-2 text-white/70">
+          <h3 className="text-[13px] font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
             <User size={14} /> Profile
           </h3>
           <div className="space-y-2.5">
             <div>
-              <label className="text-[11px] text-white/30 mb-1 block font-medium">Name</label>
+              <label className="text-[11px] mb-1 block font-medium" style={{ color: 'var(--text-muted)' }}>Name</label>
               <input value={name} onChange={e => setName(e.target.value)} className="glass-input text-[13px]" />
             </div>
             <div>
-              <label className="text-[11px] text-white/30 mb-1 block font-medium">Email</label>
+              <label className="text-[11px] mb-1 block font-medium" style={{ color: 'var(--text-muted)' }}>Email</label>
               <div className="relative">
                 <input value={email} readOnly className="glass-input text-[13px] opacity-60 cursor-not-allowed pr-20" type="email" />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
                   {emailVerified ? (
-                    <span className="flex items-center gap-1 text-[10px] text-emerald-400/70">
+                    <span className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--accent-emerald)' }}>
                       <CheckCircle size={10} /> Verified
                     </span>
                   ) : (
-                    <button className="flex items-center gap-1 text-[10px] text-white/50 hover:text-white/70 transition-colors">
+                    <button className="flex items-center gap-1 text-[10px] transition-colors"
+                      style={{ color: 'var(--text-tertiary)' }}>
                       <Mail size={10} /> Verify
                     </button>
                   )}
@@ -104,26 +104,28 @@ export default function SettingsPage() {
 
         {/* Preferences */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="glass-card p-5">
-          <h3 className="text-[13px] font-semibold mb-4 flex items-center gap-2 text-white/70">
+          <h3 className="text-[13px] font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
             <Palette size={14} /> Preferences
           </h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between py-1">
               <div>
-                <div className="text-[13px] font-medium">Dark Mode</div>
-                <div className="text-[11px] text-white/25">Always-on dark theme</div>
+                <div className="text-[13px] font-medium">Theme</div>
+                <div className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{theme === 'dark' ? 'Dark mode active' : 'Light mode active'}</div>
               </div>
-              <button onClick={toggleTheme} className={`w-10 h-[22px] rounded-full transition-colors relative ${theme === 'dark' ? 'bg-white' : 'bg-white/15'}`}>
-                <div className={`w-[18px] h-[18px] rounded-full bg-black absolute top-[2px] transition-transform ${theme === 'dark' ? 'translate-x-[20px]' : 'translate-x-[2px]'}`} />
+              <button onClick={toggleTheme} className="w-10 h-[22px] rounded-full transition-colors relative" style={{ background: theme === 'dark' ? 'var(--accent-violet)' : 'var(--bg-glass-hover)' }}>
+                <div className="w-[18px] h-[18px] rounded-full absolute top-[2px] transition-transform"
+                  style={{ background: theme === 'dark' ? '#fff' : 'var(--text-ghost)', transform: theme === 'dark' ? 'translateX(20px)' : 'translateX(2px)' }} />
               </button>
             </div>
             <div className="flex items-center justify-between py-1">
               <div>
                 <div className="text-[13px] font-medium">Notifications</div>
-                <div className="text-[11px] text-white/25">Email notifications</div>
+                <div className="text-[11px]" style={{ color: 'var(--text-muted)' }}>Email notifications</div>
               </div>
-              <button onClick={() => setNotifications(!notifications)} className={`w-10 h-[22px] rounded-full transition-colors relative ${notifications ? 'bg-white' : 'bg-white/15'}`}>
-                <div className={`w-[18px] h-[18px] rounded-full bg-black absolute top-[2px] transition-transform ${notifications ? 'translate-x-[20px]' : 'translate-x-[2px]'}`} />
+              <button onClick={() => setNotifications(!notifications)} className="w-10 h-[22px] rounded-full transition-colors relative" style={{ background: notifications ? 'var(--accent-violet)' : 'var(--bg-glass-hover)' }}>
+                <div className="w-[18px] h-[18px] rounded-full absolute top-[2px] transition-transform"
+                  style={{ background: notifications ? '#fff' : 'var(--text-ghost)', transform: notifications ? 'translateX(20px)' : 'translateX(2px)' }} />
               </button>
             </div>
           </div>
@@ -131,10 +133,10 @@ export default function SettingsPage() {
 
         {/* API Keys */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card p-5">
-          <h3 className="text-[13px] font-semibold mb-3 flex items-center gap-2 text-white/70">
+          <h3 className="text-[13px] font-semibold mb-3 flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
             <Key size={14} /> API Keys
           </h3>
-          <p className="text-[11px] text-white/25 mb-3">Plurix works out of the box. Add your own API keys for higher rate limits.</p>
+          <p className="text-[11px] mb-3" style={{ color: 'var(--text-muted)' }}>Plurix works out of the box. Add your own API keys for higher rate limits.</p>
           <div className="relative">
             <input
               type={showApiKey ? 'text' : 'password'}
@@ -145,24 +147,25 @@ export default function SettingsPage() {
             />
             <button
               onClick={() => setShowApiKey(!showApiKey)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/50 transition-colors"
-            >
+              className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
+              style={{ color: 'var(--text-ghost)' }}>
               {showApiKey ? <EyeOff size={14} /> : <Eye size={14} />}
             </button>
           </div>
         </motion.div>
 
         {/* Danger Zone */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="glass-card p-5 border border-red-500/[0.08]">
-          <h3 className="text-[13px] font-semibold mb-3 flex items-center gap-2 text-red-400/70">
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="glass-card p-5" style={{ border: '1px solid rgba(239,68,68,0.08)' }}>
+          <h3 className="text-[13px] font-semibold mb-3 flex items-center gap-2" style={{ color: 'var(--accent-red)' }}>
             <Trash2 size={14} /> Danger Zone
           </h3>
           <div className="flex items-center justify-between">
             <div>
               <div className="text-[13px] font-medium">Delete Account</div>
-              <div className="text-[11px] text-white/25">Permanently delete your account and data</div>
+              <div className="text-[11px]" style={{ color: 'var(--text-muted)' }}>Permanently delete your account and data</div>
             </div>
-            <button onClick={handleDeleteAccount} className="px-3 py-1.5 rounded-lg bg-red-500/[0.08] text-red-400/70 text-[12px] hover:bg-red-500/[0.12] transition-colors">
+            <button onClick={handleDeleteAccount} className="px-3 py-1.5 rounded-lg text-[12px] transition-colors"
+              style={{ background: 'rgba(239,68,68,0.08)', color: 'var(--accent-red)' }}>
               Delete
             </button>
           </div>

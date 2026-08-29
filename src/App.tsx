@@ -18,15 +18,14 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const authInitialized = useStore(s => s.authInitialized)
   const location = useLocation()
 
-  // Still loading auth state — show minimal spinner
   if (authLoading || !authInitialized) {
-    return (        <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-white/10 border-t-white/40 rounded-full animate-spin" />
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-primary)' }}>
+        <div className="w-6 h-6 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--border-subtle)', borderTopColor: 'var(--text-tertiary)' }} />
       </div>
     )
   }
 
-  // Auth checked, no user — redirect to login
   if (!user) {
     return <Navigate to={`/auth?returnTo=${encodeURIComponent(location.pathname)}`} replace />
   }
@@ -36,7 +35,13 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   const user = useStore(s => s.user)
+  const theme = useStore(s => s.theme)
   const loadCloudConversations = useStore(s => s.loadCloudConversations)
+
+  // Apply theme class on mount and when theme changes
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+  }, [theme])
 
   // Initialize Supabase auth listener once on app mount
   useEffect(() => {
@@ -70,17 +75,12 @@ export default function App() {
   )
 }
 
-// OAuth callback handler
-// Supabase redirects here after Google/GitHub auth with tokens in the URL hash fragment.
-// The Supabase client (detectSessionInUrl:true) auto-exchanges the code on page load.
-// This component waits for the auth state to resolve and redirects accordingly.
 function AuthCallback() {
   const user = useStore(s => s.user)
   const authInitialized = useStore(s => s.authInitialized)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Check for OAuth error in URL params (e.g. ?error=access_denied)
     const params = new URLSearchParams(window.location.search)
     const errParam = params.get('error')
     const errDesc = params.get('error_description')
@@ -88,7 +88,6 @@ function AuthCallback() {
       setError(errDesc || `OAuth error: ${errParam}`)
     }
 
-    // Also check hash fragment for errors (some providers put errors there)
     const hashParams = new URLSearchParams(window.location.hash.substring(1))
     const hashError = hashParams.get('error')
     if (hashError && !errParam) {
@@ -98,13 +97,13 @@ function AuthCallback() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center px-4">
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--bg-primary)' }}>
         <div className="max-w-sm w-full text-center">
           <div className="w-14 h-14 rounded-2xl bg-red-500/10 flex items-center justify-center mx-auto mb-4">
             <X size={28} className="text-red-400" />
           </div>
           <h2 className="text-xl font-bold mb-2">Authentication failed</h2>
-          <p className="text-white/40 text-sm mb-6">{error}</p>
+          <p style={{ color: 'var(--text-tertiary)' }} className="text-sm mb-6">{error}</p>
           <a href="/auth" className="btn-primary inline-flex justify-center">
             Back to Sign In
           </a>
@@ -114,10 +113,11 @@ function AuthCallback() {
   }
 
   if (!authInitialized) {
-    return (        <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-primary)' }}>
         <div className="text-center">
-          <div className="w-6 h-6 border-2 border-white/10 border-t-white/40 rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-white/30 text-sm">Signing you in...</p>
+          <div className="w-6 h-6 border-2 rounded-full animate-spin mx-auto mb-3" style={{ borderColor: 'var(--border-subtle)', borderTopColor: 'var(--text-tertiary)' }} />
+          <p style={{ color: 'var(--text-muted)' }} className="text-sm">Signing you in...</p>
         </div>
       </div>
     )
@@ -127,6 +127,5 @@ function AuthCallback() {
     return <Navigate to="/chat" replace />
   }
 
-  // No user after auth initialized — OAuth failed or was cancelled
   return <Navigate to="/auth" replace />
 }

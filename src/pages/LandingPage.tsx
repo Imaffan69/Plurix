@@ -1,22 +1,22 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowRight, Zap, Globe, Shield, Brain, MessageSquare, Code, Image, Search, ChevronRight, Lock, ArrowUpRight } from 'lucide-react'
+import { ArrowRight, Zap, Globe, Shield, Brain, MessageSquare, Code, Image, Search, Lock, Sun, Moon } from 'lucide-react'
 import { useStore } from '@/store'
 
 const models = [
-  { name: 'GPT-OSS 120B', provider: 'OpenAI • Recommended' },
-  { name: 'Qwen 3.8 27B', provider: 'Alibaba' },
-  { name: 'Nemotron Ultra 550B', provider: 'NVIDIA' },
+  { name: 'GPT-OSS 120B', provider: 'OpenAI via Groq • Recommended' },
+  { name: 'Llama 4 Maverick', provider: 'Meta via OpenRouter' },
+  { name: 'Nemotron Ultra 550B', provider: 'NVIDIA via OpenRouter' },
   { name: 'Gemini 3.5 Flash', provider: 'Google' },
-  { name: 'Gemma 4 31B', provider: 'Google' },
-  { name: 'MiniMax M3', provider: 'MiniMax' },
+  { name: 'Mistral Medium 3.5', provider: 'Mistral AI' },
+  { name: 'Qwen 3.8 27B', provider: 'Alibaba via Groq' },
 ]
 
 const features = [
-  { icon: Brain, title: '15+ AI Models', desc: 'Switch between Gemini, Nemotron, Qwen, GPT-OSS, and more.', color: 'violet' },
+  { icon: Brain, title: '28+ AI Models', desc: 'Switch between Gemini, Nemotron, Qwen, GPT-OSS, Mistral, and more.', color: 'violet' },
   { icon: Zap, title: 'Instant', desc: 'Ultra-fast inference. No waiting, no queues.', color: 'blue' },
   { icon: Shield, title: 'Private', desc: 'Your conversations stay yours. No data selling.', color: 'violet' },
-  { icon: Code, title: 'Code', desc: 'Write and run code. Multiple languages.', color: 'blue' },
+  { icon: Code, title: 'Code Playground', desc: 'Write and run code in 6+ languages with AI generation.', color: 'blue' },
   { icon: Image, title: 'Image Gen', desc: 'Generate images with Pollination AI. Free.', color: 'violet' },
   { icon: Globe, title: 'Web Search', desc: 'Real-time search with cited sources.', color: 'blue' },
   { icon: MessageSquare, title: 'Files', desc: 'Upload PDFs, images, docs. AI analyzes them.', color: 'violet' },
@@ -25,24 +25,35 @@ const features = [
 
 export default function LandingPage() {
   const user = useStore(s => s.user)
+  const theme = useStore(s => s.theme)
+  const toggleTheme = useStore(s => s.toggleTheme)
+  const isDark = theme === 'dark'
+
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white overflow-hidden">
+    <div className="min-h-screen text-white overflow-hidden" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute inset-0 dot-grid opacity-30" />
       </div>
 
-      <nav className="fixed top-0 left-0 right-0 z-50 px-5 py-3 backdrop-blur-md bg-[#0A0A0A]/80 border-b border-white/[0.04]">
+      {/* Nav */}
+      <nav className="fixed top-0 left-0 right-0 z-50 px-5 py-3 backdrop-blur-md" style={{ background: `${isDark ? '#0A0A0A' : '#ffffff'}cc`, borderBottom: '1px solid var(--border-subtle)' }}>
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center text-white font-bold text-[11px]">P</div>
             <span className="font-semibold text-[15px]">Plurix</span>
           </Link>
-          <div className="hidden md:flex items-center gap-6 text-[13px] text-white/40">
+          <div className="hidden md:flex items-center gap-6 text-[13px]" style={{ color: 'var(--text-tertiary)' }}>
             <a href="#features" className="hover:text-white/80 transition-colors">Features</a>
             <a href="#models" className="hover:text-white/80 transition-colors">Models</a>
             <Link to="/terms" className="hover:text-white/80 transition-colors">Terms</Link>
           </div>
           <div className="flex items-center gap-2">
+            <button onClick={toggleTheme} className="p-1.5 rounded-lg transition-colors"
+              style={{ color: 'var(--text-ghost)' }}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-ghost)'}>
+              {isDark ? <Sun size={15} /> : <Moon size={15} />}
+            </button>
             {user ? (
               <Link to="/chat" className="btn-primary text-[13px]">Start Chatting <ArrowRight size={13} /></Link>
             ) : (
@@ -55,115 +66,115 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      <section className="relative pt-28 pb-16 px-5">
+      {/* Hero */}
+      <section className="pt-32 pb-20 px-5 relative">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.06] mb-6 text-[12px] text-white/40">
-            <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
-            One AI. Every Model. Free.
-          </div>
-          <h1 className="text-[2.8rem] sm:text-[3.5rem] md:text-[4.5rem] font-black leading-[0.92] tracking-[-0.03em] mb-5">
-            <span className="block text-white/90">The last AI</span>
-            <span className="block text-gold-gradient">assistant you need.</span>
-          </h1>
-          <p className="text-[15px] text-white/30 max-w-lg mx-auto mb-7 leading-relaxed">
-            Chat with Gemini, Nemotron 550B, Qwen 3.8, GPT-OSS 120B — all free, all fast, one interface.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5">
-            {user ? (
-              <Link to="/chat" className="btn-primary text-[13px] px-6 py-2">Start Chatting <ArrowRight size={14} /></Link>
-            ) : (
-              <Link to="/auth" className="btn-primary text-[13px] px-6 py-2">Start Free <ArrowRight size={14} /></Link>
-            )}
-            <a href="#features" className="btn-secondary text-[13px] px-6 py-2">See Features <ChevronRight size={14} /></a>
-          </div>
-          <div className="mt-12 flex flex-wrap justify-center gap-2">
-            {models.map((m) => (
-              <div key={m.name} className="px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-[11px] text-white/30">
-                {m.name} <span className="text-white/15">· {m.provider}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="features" className="py-16 px-5">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl md:text-3xl font-bold mb-2">Everything you need.</h2>
-            <p className="text-white/30 text-[14px]">Nothing you don't.</p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-2.5">
-            {features.map((f) => (
-              <div key={f.title} className="glass-card p-4 group">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-2.5 transition-colors ${f.color === 'violet' ? 'bg-violet-500/10 group-hover:bg-violet-500/15' : 'bg-blue-500/10 group-hover:bg-blue-500/15'}`}>
-                  <f.icon size={16} className={f.color === 'violet' ? 'text-violet-400/60' : 'text-blue-400/60'} />
-                </div>
-                <h3 className="font-semibold text-[13px] mb-1">{f.title}</h3>
-                <p className="text-white/25 text-[12px] leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="models" className="py-16 px-5">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl md:text-3xl font-bold mb-2">Pick any model.</h2>
-            <p className="text-white/30 text-[14px]">They're all free.</p>
-          </div>
-          <div className="grid sm:grid-cols-2 gap-2.5">
-            {models.map((m) => (
-              <div key={m.name} className="glass-card p-3.5 flex items-center gap-3 group">
-                <div className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center shrink-0">
-                  <Brain size={14} className="text-white/30" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-[12px]">{m.name}</h3>
-                    <span className="text-[8px] px-1 py-0.5 rounded bg-violet-500/10 text-violet-400/60 font-medium uppercase">Free</span>
-                  </div>
-                  <p className="text-white/20 text-[11px] mt-0.5">{m.provider}</p>
-                </div>
-                <ArrowUpRight size={12} className="text-white/10 group-hover:text-white/30 transition-colors shrink-0" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="py-16 px-5">
-        <div className="max-w-3xl mx-auto">
-          <div className="glass-card p-8 text-center">
-            <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center mx-auto mb-4">
-              <Lock size={18} className="text-violet-400/50" />
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500/20 to-blue-500/20 flex items-center justify-center mx-auto mb-6" style={{ border: '1px solid rgba(139,92,246,0.1)' }}>
+              <Brain size={28} style={{ color: 'var(--accent-violet)' }} />
             </div>
-            <h2 className="text-xl md:text-2xl font-bold mb-2">Your data, your business.</h2>
-            <p className="text-white/30 text-[13px] max-w-md mx-auto mb-6">
-              We don't sell your data. We don't train on your prompts. Encrypted and secure.
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">
+              Intelligence, <span className="text-gold-gradient">unlimited</span>.
+            </h1>
+            <p className="text-lg max-w-xl mx-auto mb-8" style={{ color: 'var(--text-tertiary)' }}>
+              28+ free AI models. Code playground. Image generation. Data analysis.
+              <br className="hidden sm:block" />All in one workspace.
             </p>
-            <div className="flex items-center justify-center gap-2.5">
+            <div className="flex items-center justify-center gap-3">
               {user ? (
-              <Link to="/chat" className="btn-primary text-[13px] px-5 py-2">Start Chatting <ArrowRight size={14} /></Link>
-            ) : (
-              <Link to="/auth" className="btn-primary text-[13px] px-5 py-2">Start Free <ArrowRight size={14} /></Link>
-            )}
-              <Link to="/privacy" className="btn-secondary text-[13px] px-5 py-2">Privacy Policy</Link>
+                <Link to="/chat" className="btn-primary text-[14px] px-6 py-2.5">
+                  Start Chatting <ArrowRight size={14} />
+                </Link>
+              ) : (
+                <>
+                  <Link to="/auth" className="btn-primary text-[14px] px-6 py-2.5">
+                    Get Started Free <ArrowRight size={14} />
+                  </Link>
+                  <Link to="/auth" className="btn-secondary text-[14px] px-6 py-2.5">
+                    Sign In
+                  </Link>
+                </>
+              )}
             </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section id="features" className="py-20 px-5">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl font-bold mb-2">Built for power users</h2>
+            <p style={{ color: 'var(--text-muted)' }}>Everything you need, nothing you don't.</p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {features.map((f, i) => (
+              <motion.div key={f.title} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="glass-card p-4">
+                <f.icon size={18} className={`mb-2 ${f.color === 'violet' ? 'text-violet-400/60' : 'text-blue-400/60'}`} />
+                <h3 className="font-semibold text-[13px] mb-1">{f.title}</h3>
+                <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-muted)' }}>{f.desc}</p>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
-      <footer className="border-t border-white/[0.04] py-8 px-5">
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center text-white font-bold text-[10px]">P</div>
-            <span className="font-semibold text-[13px]">Plurix</span>
-            <span className="text-white/15 text-[11px]">© 2026</span>
+      {/* Models */}
+      <section id="models" className="py-20 px-5">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl font-bold mb-2">28+ models, zero cost</h2>
+            <p style={{ color: 'var(--text-muted)' }}>Groq, Gemini, Mistral, OpenRouter — all free.</p>
           </div>
-          <div className="flex items-center gap-5 text-[11px] text-white/25">
-            <Link to="/terms" className="hover:text-white/50 transition-colors">Terms</Link>
-            <Link to="/privacy" className="hover:text-white/50 transition-colors">Privacy</Link>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {models.map((m, i) => (
+              <motion.div key={m.name} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                className="glass-card p-4 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-subtle)' }}>
+                  <Zap size={14} style={{ color: 'var(--accent-violet)' }} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="font-semibold text-[13px]">{m.name}</div>
+                  <div className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{m.provider}</div>
+                </div>
+                {m.name === 'GPT-OSS 120B' && (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded font-medium uppercase" style={{ background: 'rgba(16,185,129,0.1)', color: 'var(--accent-emerald)' }}>Rec</span>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-20 px-5">
+        <div className="max-w-2xl mx-auto text-center">
+          <div className="glass-card p-10">
+            <h2 className="text-2xl font-bold mb-3">Ready to build?</h2>
+            <p className="text-[14px] mb-6" style={{ color: 'var(--text-muted)' }}>Free forever. No credit card. No limits.</p>
+            {user ? (
+              <Link to="/chat" className="btn-primary text-[14px] px-8 py-2.5">
+                Open Workspace <ArrowRight size={14} />
+              </Link>
+            ) : (
+              <Link to="/auth" className="btn-primary text-[14px] px-8 py-2.5">
+                Get Started Free <ArrowRight size={14} />
+              </Link>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-8 px-5" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-[12px]" style={{ color: 'var(--text-ghost)' }}>
+            <div className="w-5 h-5 rounded bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center text-white font-bold text-[8px]">P</div>
+            <span>Plurix AI</span>
+          </div>
+          <div className="flex items-center gap-5 text-[12px]" style={{ color: 'var(--text-ghost)' }}>
+            <Link to="/terms" className="hover:opacity-70 transition-opacity">Terms</Link>
+            <Link to="/privacy" className="hover:opacity-70 transition-opacity">Privacy</Link>
           </div>
         </div>
       </footer>

@@ -10,9 +10,10 @@ describe('Zustand store', () => {
       authInitialized: false,
       conversations: [],
       activeConversation: null,
-      selectedModel: 'gpt-oss-120b',
+      selectedModel: 'openrouter-free',
       sidebarOpen: true,
       theme: 'dark',
+      feedback: {},
     })
   })
 
@@ -49,8 +50,8 @@ describe('Zustand store', () => {
   })
 
   describe('model selection', () => {
-    it('defaults to gpt-oss-120b', () => {
-      expect(useStore.getState().selectedModel).toBe('gpt-oss-120b')
+    it('defaults to openrouter-free (Plurix V1)', () => {
+      expect(useStore.getState().selectedModel).toBe('openrouter-free')
     })
 
     it('setSelectedModel updates the model', () => {
@@ -61,6 +62,7 @@ describe('Zustand store', () => {
     it('setSelectedModel accepts all model types', () => {
       const models: AIModel[] = [
         'gemini-3.5-flash', 'nemotron-3.5-lightning', 'qwen-3.8-27b', 'gpt-oss-120b',
+        'openrouter-free', 'mistral-medium-3.5', 'codestral',
       ]
       for (const m of models) {
         useStore.getState().setSelectedModel(m)
@@ -92,6 +94,36 @@ describe('Zustand store', () => {
       expect(useStore.getState().theme).toBe('light')
       useStore.getState().toggleTheme()
       expect(useStore.getState().theme).toBe('dark')
+    })
+  })
+
+  describe('feedback', () => {
+    it('starts with empty feedback', () => {
+      expect(useStore.getState().feedback).toEqual({})
+    })
+
+    it('setFeedback sets up vote', () => {
+      useStore.getState().setFeedback('msg-1', 'up')
+      expect(useStore.getState().feedback['msg-1']).toBe('up')
+    })
+
+    it('setFeedback overwrites with null', () => {
+      useStore.getState().setFeedback('msg-1', 'up')
+      useStore.getState().setFeedback('msg-1', null)
+      expect(useStore.getState().feedback['msg-1']).toBeNull()
+    })
+
+    it('setFeedback switches vote direction', () => {
+      useStore.getState().setFeedback('msg-1', 'up')
+      useStore.getState().setFeedback('msg-1', 'down')
+      expect(useStore.getState().feedback['msg-1']).toBe('down')
+    })
+
+    it('setFeedback affects only specified message', () => {
+      useStore.getState().setFeedback('msg-1', 'up')
+      useStore.getState().setFeedback('msg-2', 'down')
+      expect(useStore.getState().feedback['msg-1']).toBe('up')
+      expect(useStore.getState().feedback['msg-2']).toBe('down')
     })
   })
 

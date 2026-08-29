@@ -25,10 +25,26 @@ function loadSelectedModel(): AIModel {
   try { return (localStorage.getItem('plurix_model') as AIModel) || 'openrouter-free' } catch { return 'openrouter-free' }
 }
 
+function loadTheme(): 'dark' | 'light' {
+  try { return (localStorage.getItem('plurix_theme') as 'dark' | 'light') || 'dark' } catch { return 'dark' }
+}
+
+function saveTheme(theme: 'dark' | 'light') {
+  try { localStorage.setItem('plurix_theme', theme) } catch {}
+}
+
 // Lazy-import cloud storage to avoid circular deps
 async function getCloudStorage() {
   return await import('@/lib/cloudStorage')
 }
+
+// Apply theme to document on load
+function applyTheme(theme: 'dark' | 'light') {
+  document.documentElement.setAttribute('data-theme', theme)
+}
+
+// Apply initial theme immediately
+applyTheme(loadTheme())
 
 interface AppState {
   user: User | null
@@ -59,6 +75,10 @@ interface AppState {
 
   theme: 'dark' | 'light'
   toggleTheme: () => void
+
+  /** Message feedback: message ID -> 'up' | 'down' | null */
+  feedback: Record<string, 'up' | 'down' | null>
+  setFeedback: (messageId: string, value: 'up' | 'down' | null) => void
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -136,7 +156,6 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   loadCloudConversations: (cloudConvs) => {
-    // Merge cloud conversations with local ones
     const localConvs = get().conversations
     const cloudIds = new Set(cloudConvs.map(c => c.id))
     const localOnly = localConvs.filter(c => !cloudIds.has(c.id))
@@ -154,8 +173,18 @@ export const useStore = create<AppState>((set, get) => ({
   sidebarOpen: true,
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
 
-  theme: 'dark',
-  toggleTheme: () => set((state) => ({
-    theme: state.theme === 'dark' ? 'light' : 'dark',
-  })),
+  theme: loadTheme(),
+  toggleTheme: () => set((state) => {
+    const next = state.theme === 'dark' ? 'light' : 'dark'
+    saveTheme(next)
+    applyTheme(next)
+    return { theme: next }
+  }),
+
+  feedback: {},
+  setFeedback: (messageId, value) => {
+    set((state) => ({
+      feedback: { ...state.feedback, [messageId]: value }
+    }))
+  },
 }))
